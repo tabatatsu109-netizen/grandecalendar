@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>クラブプランナー 管理</title>
+<style>
+:root {
+  --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --border: #2e3247;
+  --text: #e8eaf0; --text-muted: #7a7f9a; --accent: #4a7cdc;
+  --U15: #e05252; --U14: #9b59dc; --U13: #4a7cdc; --U12: #3ab07a; --U10: #e0bc3a;
+  --red: #e05252; --green: #3ab07a; --yellow: #e0bc3a; --radius: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif; }
+
+/* Header */
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; }
+.header-logo { font-size: 16px; font-weight: 700; }
+.header-logo span { color: var(--accent); }
+.nav-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 6px 14px; border-radius: var(--radius); font-size: 13px; cursor: pointer; text-decoration: none; display: inline-block; }
+.nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Tab nav */
+.tab-nav { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 16px; overflow-x: auto; }
+.tab-btn { padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--text-muted); background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ===== ADMIN CALENDAR ===== */
+.admin-cal-wrap { padding: 16px; }
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cal-title { font-size: 18px; font-weight: 700; }
+.cal-nav { background: var(--surface2); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: var(--radius); cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+.cal-nav:hover { border-color: var(--accent); }
+
+.cal-grid { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--border); }
+.cal-wd { text-align: center; padding: 8px 0; font-size: 11px; font-weight: 700; color: var(--text-muted); }
+.cal-wd:first-child { color: var(--red); }
+.cal-wd:last-child { color: #6ab4ff; }
+
+.cal-days { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal-day {
+  border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  min-height: 90px; padding: 4px; position: relative; cursor: pointer;
+  transition: background 0.1s;
+}
+.cal-day:hover { background: rgba(74,124,220,0.07); }
+.cal-day:nth-child(7n) { border-right: none; }
+.cal-day.other-month { opacity: 0.4; }
+.cal-day.today { background: rgba(74,124,220,0.1); }
+.cal-day.today .day-num { color: var(--accent); font-weight: 700; background: var(--accent); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.day-num { font-size: 12px; color: var(--text-muted); margin-bottom: 3px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+.cal-day:nth-child(7n+1) .day-num:not(.today-num) { color: var(--red); }
+.cal-day:nth-child(7n) .day-num:not(.today-num) { color: #6ab4ff; }
+
+.day-add-hint { position: absolute; bottom: 3px; right: 3px; font-size: 16px; color: var(--border); opacity: 0; transition: opacity 0.1s; pointer-events: none; }
+.cal-day:hover .day-add-hint { opacity: 1; }
+
+.event-chip {
+  font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 4px;
+  margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer; border-left: 3px solid;
+}
+.event-chip[data-cat="U15"] { background: rgba(224,82,82,0.18); color: var(--U15); border-color: var(--U15); }
+.event-chip[data-cat="U14"] { background: rgba(155,89,220,0.18); color: var(--U14); border-color: var(--U14); }
+.event-chip[data-cat="U13"] { background: rgba(74,124,220,0.18); color: var(--U13); border-color: var(--U13); }
+.event-chip[data-cat="U12"] { background: rgba(58,176,122,0.18); color: var(--U12); border-color: var(--U12); }
+.event-chip[data-cat="U10"] { background: rgba(224,188,58,0.18); color: var(--U10); border-color: var(--U10); }
+
+@media(max-width:600px){
+  .cal-day { min-height: 68px; }
+  .event-chip { font-size: 9px; padding: 1px 3px; }
+}
+
+/* ===== SLIDE-UP MODAL (form) ===== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 300;
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--surface); border-radius: 16px 16px 0 0;
+  width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; padding: 20px;
+  transform: translateY(100%); transition: transform 0.28s cubic-bezier(.32,.72,0,1);
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-drag { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.modal-title { font-size: 16px; font-weight: 700; }
+.modal-close { background: var(--surface2); border: 1px solid var(--border); color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+
+/* ===== Form ===== */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media(max-width:480px){ .form-grid { grid-template-columns: 1fr; } }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group.full { grid-column: 1/-1; }
+label { font-size: 11px; color: var(--text-muted); font-weight: 700; }
+input, select, textarea {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+  padding: 9px 10px; border-radius: var(--radius); font-size: 13px; width: 100%;
+  -webkit-appearance: none; appearance: none;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+textarea { resize: vertical; min-height: 60px; }
+input[readonly] { color: var(--accent); font-weight: 700; }
+
+.btn { padding: 10px 20px; border-radius: var(--radius); font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: opacity 0.15s; }
+.btn:active { opacity: 0.8; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-success { background: var(--green); color: #fff; }
+.btn-danger { background: rgba(224,82,82,0.15); color: var(--red); border: 1px solid rgba(224,82,82,0.3); }
+.btn-copy { background: rgba(224,188,58,0.15); color: var(--yellow); border: 1px solid rgba(224,188,58,0.3); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+.form-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
+.form-actions .btn-danger { margin-left: auto; }
+
+/* Chip select */
+.chip-select { display: flex; flex-wrap: wrap; gap: 6px; padding: 7px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); min-height: 44px; }
+.chip { padding: 4px 11px; border-radius: 20px; font-size: 11px; cursor: pointer; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-muted); user-select: none; }
+.chip.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* Conflict warning */
+.warn-box { background: rgba(224,82,82,0.1); border: 1px solid rgba(224,82,82,0.3); border-radius: var(--radius); padding: 8px 12px; font-size: 12px; color: var(--red); margin-bottom: 10px; display: none; }
+.warn-box.show { display: block; }
+
+/* ===== Other tabs ===== */
+.tab-inner { padding: 16px; }
+.section-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+.form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+.item-list { display: flex; flex-direction: column; gap: 6px; }
+.item-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+.item-card:hover { border-color: var(--accent); }
+.item-name { font-size: 14px; font-weight: 700; }
+.item-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* Save bar */
+.save-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 100; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+.save-status { font-size: 12px; color: var(--text-muted); }
+
+/* Toast */
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(16px); background: var(--green); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 700; opacity: 0; transition: all 0.3s; z-index: 500; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.error { background: var(--red); }
+
+/* Sub-modal for player/staff/abs forms */
+.sub-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">⚙️ 管理<span>画面</span></div>
+  <a class="nav-btn" href="planner.html">← 閲覧</a>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" id="tbn-calendar" onclick="switchTab('calendar',this)">📅 カレンダー</button>
+  <button class="tab-btn" id="tbn-players" onclick="switchTab('players',this)">👤 選手</button>
+  <button class="tab-btn" id="tbn-staff" onclick="switchTab('staff',this)">🧑‍💼 スタッフ</button>
+  <button class="tab-btn" id="tbn-absences" onclick="switchTab('absences',this)">🏖 休み</button>
+  <button class="tab-btn" id="tbn-settings" onclick="switchTab('settings',this)">⚙️ 設定</button>
+</div>
+
+<!-- ===== CALENDAR TAB ===== -->
+<div class="tab-content active" id="tab-calendar">
+  <div class="admin-cal-wrap">
+    <div class="cal-header">
+      <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
+      <div class="cal-title" id="cal-title"></div>
+      <button class="cal-nav" onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-weekdays">
+        <div class="cal-wd">日</div><div class="cal-wd">月</div><div class="cal-wd">火</div>
+        <div class="cal-wd">水</div><div class="cal-wd">木</div><div class="cal-wd">金</div><div class="cal-wd">土</div>
+      </div>
+      <div class="cal-days" id="cal-days"></div>
+    </div>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center">日付マスをタップ→新規登録 ／ 予定をタップ→編集</p>
+  </div>
+</div>
+
+<!-- ===== PLAYERS TAB ===== -->
+<div class="tab-content" id="tab-players">
+  <div class="tab-inner">
+    <div class="section-title">選手管理 <button class="btn btn-primary btn-sm" onclick="openPlayerForm()">＋ 追加</button></div>
+    <div class="sub-form" id="player-form" style="display:none">
+      <div class="form-grid">
+        <div class="form-group"><label>選手名 *</label><input type="text" id="pf-name" placeholder="氏名"></div>
+        <div class="form-group"><label>カテゴリー *</label>
+          <select id="pf-cat"><option value="U15">U15</option><option value="U14">U14</option><option value="U13">U13</option><option value="U12">U12</option><option value="U10">U10</option></select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary btn-sm" onclick="savePlayer()">保存</button>
+        <button class="btn btn-sm" style="background:var(--surface2);border:1px solid var(--border)" onclick="document.getElementById('player-form').style.display='none'">キャンセル</button>
+        <button class="btn btn-danger btn-sm" id="del-player-btn" style="display:none" onclick="deletePlayer()">削除</button>
+      </div>
+    </div>
+    <div class="item-list" id="player-list"></div>
+  </div>
+</div>
+
+<!-- ===== STAFF TAB ===== -->
+<div class="tab-content" id="tab-staff">
+  <div class="tab-inner">
+    <div class="section-title">スタッフ管理 <button class="btn btn-primary btn-sm" onclick="openStaffForm()">＋ 追加</button></div>
+    <div class="sub-form" id="staff-subform" style="display:none">
+      <div class="form-grid">
+        <div class="form-group"><label>氏名 *</label><input type="text" id="sf-name" placeholder="氏名"></div>
+        <div class="form-group"><label>役職</label>
+          <select id="sf-role"><option>監督</option><option>ヘッドコーチ</option><option>コーチ</option><option>GKコーチ</option><option>マネージャー</option><option>トレーナー</option></select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary btn-sm" onclick="saveStaff()">保存</button>
+        <button class="btn btn-sm" style="background:var(--surface2);border:1px solid var(--border)" onclick="document.getElementById('staff-subform').style.display='none'">キャンセル</button>
+        <button class="btn btn-danger btn-sm" id="del-staff-btn" style="display:none" onclick="deleteStaff()">削除</button>
+      </div>
+    </div>
+    <div class="item-list" id="staff-list"></div>
+  </div>
+</div>
+
+<!-- ===== ABSENCES TAB ===== -->
+<div class="tab-content" id="tab-absences">
+  <div class="tab-inner">
+    <div class="section-title">選手休み管理 <button class="btn btn-primary btn-sm" onclick="openAbsForm()">＋ 追加</button></div>
+    <div class="sub-form" id="abs-form" style="display:none">
+      <div class="form-grid">
+        <div class="form-group full"><label>選手 *</label><select id="abf-player"></select></div>
+        <div class="form-group"><label>開始日</label><input type="date" id="abf-start"></div>
+        <div class="form-group"><label>終了日</label><input type="date" id="abf-end"></div>
+        <div class="form-group full"><label>理由</label>
+          <select id="abf-reason"><option>家族旅行</option><option>帰省</option><option>怪我</option><option>病気</option><option>学校行事</option><option>その他</option></select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary btn-sm" onclick="saveAbsence()">保存</button>
+        <button class="btn btn-sm" style="background:var(--surface2);border:1px solid var(--border)" onclick="document.getElementById('abs-form').style.display='none'">キャンセル</button>
+        <button class="btn btn-danger btn-sm" id="del-abs-btn" style="display:none" onclick="deleteAbsence()">削除</button>
+      </div>
+    </div>
+    <div class="item-list" id="abs-list"></div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS TAB ===== -->
+<div class="tab-content" id="tab-settings">
+  <div class="tab-inner">
+    <div class="section-title">JSONBin 設定</div>
+    <div class="form-card">
+      <div class="form-group" style="margin-bottom:10px"><label>Bin ID</label><input type="text" id="s-binid" placeholder="例: 6a28d6..."></div>
+      <div class="form-group" style="margin-bottom:10px"><label>Access Key</label><input type="text" id="s-apikey" placeholder="$2a$10$..."></div>
+      <button class="btn btn-primary btn-sm" onclick="saveSettings()">設定を保存</button>
+      <p style="font-size:11px;color:var(--text-muted);margin-top:10px">設定はlocalStorageに保存されます。</p>
+    </div>
+    <div class="section-title" style="margin-top:8px">会場マスター</div>
+    <div class="form-card">
+      <div style="display:flex;gap:8px;margin-bottom:10px"><input type="text" id="venue-input" placeholder="会場名"><button class="btn btn-primary btn-sm" onclick="addVenue()">追加</button></div>
+      <div class="item-list" id="venue-list"></div>
+    </div>
+    <div class="section-title" style="margin-top:8px">車両マスター</div>
+    <div class="form-card">
+      <div style="display:flex;gap:8px;margin-bottom:10px"><input type="text" id="veh-input" placeholder="車両名"><button class="btn btn-primary btn-sm" onclick="addVehicle()">追加</button></div>
+      <div class="item-list" id="veh-list"></div>
+    </div>
+    <div style="margin-top:12px"><button class="btn btn-danger btn-sm" onclick="exportData()">データをエクスポート（JSON）</button></div>
+  </div>
+</div>
+
+<!-- ===== ACTIVITY FORM MODAL ===== -->
+<div class="modal-overlay" id="act-modal" onclick="handleOverlayClick(event)">
+  <div class="modal" id="act-modal-body">
+    <div class="modal-drag"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title-text">活動を登録</div>
+      <button class="modal-close" onclick="closeActModal()">✕</button>
+    </div>
+    <div class="warn-box" id="conflict-warn"></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>日付 *</label>
+        <input type="date" id="f-date" onchange="checkConflicts();updatePlayerCount()">
+      </div>
+      <div class="form-group">
+        <label>カテゴリー *</label>
+        <select id="f-cat" onchange="updatePlayerChips()">
+          <option value="">選択</option>
+          <option value="U15">U15</option><option value="U14">U14</option>
+          <option value="U13">U13</option><option value="U12">U12</option><option value="U10">U10</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>活動種別 *</label>
+        <select id="f-type">
+          <option value="TR">TR（トレーニング）</option>
+          <option value="TRM">TRM（練習試合）</option>
+          <option value="GAME">公式戦</option>
+          <option value="TOUR">遠征</option>
+          <option value="OFF">OFF</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>活動名</label>
+        <input type="text" id="f-name" placeholder="例: U15 TR">
+      </div>
+      <div class="form-group">
+        <label>開始時間</label>
+        <input type="time" id="f-start" value="16:00" onchange="checkConflicts()">
+      </div>
+      <div class="form-group">
+        <label>終了時間</label>
+        <input type="time" id="f-end" value="18:00" onchange="checkConflicts()">
+      </div>
+      <div class="form-group full">
+        <label>会場</label>
+        <select id="f-venue" onchange="checkConflicts()"><option value="">選択</option></select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:10px">
+      <label>担当スタッフ</label>
+      <div class="chip-select" id="staff-chips"></div>
+    </div>
+    <div class="form-group" style="margin-top:10px">
+      <label>使用車両</label>
+      <div class="chip-select" id="vehicle-chips"></div>
+    </div>
+    <div class="form-group" style="margin-top:10px">
+      <label>追加招集選手（他カテゴリーから）</label>
+      <div class="chip-select" id="extra-player-chips"></div>
+    </div>
+    <div class="form-group" style="margin-top:10px">
+      <label>欠席選手</label>
+      <div class="chip-select" id="absent-chips"></div>
+    </div>
+    <div class="form-group" style="margin-top:10px">
+      <label>参加予定人数（自動計算）</label>
+      <input type="text" id="f-count" readonly>
+    </div>
+    <div class="form-group" style="margin-top:10px">
+      <label>備考</label>
+      <textarea id="f-notes" placeholder="対戦相手・連絡事項など"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveActivity()">💾 保存</button>
+      <button class="btn btn-copy" id="copy-btn" style="display:none" onclick="duplicateActivity()">📋 複製</button>
+      <button class="btn btn-danger btn-sm" id="del-act-btn" style="display:none" onclick="deleteActivity()">削除</button>
+    </div>
+  </div>
+</div>
+
+<!-- Save bar -->
+<div class="save-bar">
+  <span class="save-status" id="save-status">読み込み中...</span>
+  <button class="btn btn-primary btn-sm" onclick="saveAll()">💾 保存する</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== Config =====
+const CONFIG_KEY = 'planner_config';
+const DATA_KEY   = 'planner_data';
+const CAT_COLOR  = { U15:'#e05252', U14:'#9b59dc', U13:'#4a7cdc', U12:'#3ab07a', U10:'#e0bc3a' };
+const TODAY      = new Date();
+
+let cfg  = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{"binId":"","apiKey":""}');
+let data = { activities:[], players:[], staff:[], vehicles:['マイクロバス','ハイエース①','ハイエース②','軽トラック'], venues:['白州総合グラウンド','長坂総合スポーツ公園'], absences:[] };
+
+let curYear  = TODAY.getFullYear();
+let curMonth = TODAY.getMonth();
+let editActId = null;  // null = new, string = editing
+
+// ===== JSONBin =====
+async function binGet() {
+  if (!cfg.binId || !cfg.apiKey) return null;
+  try {
+    const r = await fetch(`https://api.jsonbin.io/v3/b/${cfg.binId}/latest`, { headers:{'X-Access-Key':cfg.apiKey} });
+    if (!r.ok) return null;
+    return (await r.json()).record;
+  } catch(e) { return null; }
+}
+
+async function binPut(d) {
+  localStorage.setItem(DATA_KEY, JSON.stringify(d));
+  if (!cfg.binId || !cfg.apiKey) return false;
+  try {
+    const cur = await binGet();
+    const merged = { ...cur, ...d };
+    const r = await fetch(`https://api.jsonbin.io/v3/b/${cfg.binId}`, {
+      method:'PUT', headers:{'Content-Type':'application/json','X-Access-Key':cfg.apiKey},
+      body: JSON.stringify(merged)
+    });
+    if (r.ok) localStorage.setItem(DATA_KEY, JSON.stringify(merged));
+    return r.ok;
+  } catch(e) { return false; }
+}
+
+// ===== Init =====
+async function init() {
+  const remote = await binGet();
+  const local  = localStorage.getItem(DATA_KEY);
+  if (remote)      data = { ...data, ...remote };
+  else if (local)  data = { ...data, ...JSON.parse(local) };
+  document.getElementById('s-binid').value  = cfg.binId;
+  document.getElementById('s-apikey').value = cfg.apiKey;
+  renderAll();
+  updateSaveStatus();
+}
+
+function renderAll() {
+  renderCalendar();
+  renderPlayerList();
+  renderStaffList();
+  renderAbsList();
+  renderVenueList();
+  renderVehList();
+}
+
+// ===== Tab =====
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ===== Toast =====
+function toast(msg, err=false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (err?' error':'');
+  setTimeout(()=>el.className='toast', 2500);
+}
+
+function updateSaveStatus() {
+  document.getElementById('save-status').textContent = cfg.binId ? 'JSONBin接続済み' : 'ローカル保存モード';
+}
+
+async function saveAll() {
+  const ok = await binPut(data);
+  toast(ok ? '保存しました ✓' : 'ローカルに保存しました（JSONBin未設定）');
+}
+
+// ===== CALENDAR =====
+function changeMonth(d) {
+  curMonth += d;
+  if (curMonth < 0) { curMonth=11; curYear--; }
+  if (curMonth > 11) { curMonth=0; curYear++; }
+  renderCalendar();
+}
+
+function fmtDate(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function renderCalendar() {
+  document.getElementById('cal-title').textContent = `${curYear}年${curMonth+1}月`;
+  const first  = new Date(curYear, curMonth, 1);
+  const last   = new Date(curYear, curMonth+1, 0);
+  const startWd = first.getDay();
+  const cells  = [];
+  for (let i=0; i<startWd; i++) cells.push({ date: new Date(curYear, curMonth, -startWd+1+i), other:true });
+  for (let d=1; d<=last.getDate(); d++) cells.push({ date: new Date(curYear, curMonth, d), other:false });
+  while (cells.length%7 !== 0) cells.push({ date: new Date(curYear, curMonth+1, cells.length-(startWd+last.getDate())+1), other:true });
+
+  const acts = data.activities || [];
+  const container = document.getElementById('cal-days');
+  container.innerHTML = cells.map(c => {
+    const ds = fmtDate(c.date);
+    const dayActs = acts.filter(a => a.date === ds).sort((a,b)=>a.startTime.localeCompare(b.startTime));
+    const isToday = ds === fmtDate(TODAY);
+    const numEl = isToday ? `<div class="day-num today-num" style="background:var(--accent);color:#fff;border-radius:50%">${c.date.getDate()}</div>`
+                          : `<div class="day-num">${c.date.getDate()}</div>`;
+    const chips = dayActs.slice(0,4).map(a => `
+      <div class="event-chip" data-cat="${a.category}"
+           onclick="event.stopPropagation();openActForm('${a.id}')"
+           title="${a.category} ${a.name||a.actType} ${a.startTime}〜${a.endTime}">
+        ${a.category} ${a.actType}
+      </div>`).join('');
+    const more = dayActs.length > 4 ? `<div style="font-size:9px;color:var(--text-muted);padding:1px 4px">+${dayActs.length-4}</div>` : '';
+    return `<div class="cal-day${c.other?' other-month':''}${isToday?' today':''}"
+              onclick="openActForm(null,'${ds}')">
+      ${numEl}${chips}${more}
+      <span class="day-add-hint">＋</span>
+    </div>`;
+  }).join('');
+}
+
+// ===== Activity Form Modal =====
+function openActForm(id=null, date=null) {
+  editActId = id;
+  const isNew = !id;
+  document.getElementById('modal-title-text').textContent = isNew ? '活動を登録' : '活動を編集';
+  document.getElementById('del-act-btn').style.display  = isNew ? 'none' : 'inline-flex';
+  document.getElementById('copy-btn').style.display     = isNew ? 'none' : 'inline-flex';
+  document.getElementById('conflict-warn').classList.remove('show');
+
+  if (isNew) {
+    // New: pre-fill date if clicked from calendar
+    document.getElementById('f-date').value    = date || '';
+    document.getElementById('f-cat').value     = '';
+    document.getElementById('f-type').value    = 'TR';
+    document.getElementById('f-name').value    = '';
+    document.getElementById('f-start').value   = '16:00';
+    document.getElementById('f-end').value     = '18:00';
+    document.getElementById('f-notes').value   = '';
+    document.getElementById('f-count').value   = '';
+    setupVenueSelect('');
+    setupChips('staff-chips', data.staff.map(s=>s.name), []);
+    setupChips('vehicle-chips', data.vehicles, []);
+    document.getElementById('extra-player-chips').innerHTML = '';
+    document.getElementById('absent-chips').innerHTML = '';
+  } else {
+    const a = data.activities.find(x=>x.id===id);
+    if (!a) return;
+    document.getElementById('f-date').value    = a.date;
+    document.getElementById('f-cat').value     = a.category;
+    document.getElementById('f-type').value    = a.actType;
+    document.getElementById('f-name').value    = a.name||'';
+    document.getElementById('f-start').value   = a.startTime;
+    document.getElementById('f-end').value     = a.endTime;
+    document.getElementById('f-notes').value   = a.notes||'';
+    document.getElementById('f-count').value   = a.playerCount||'';
+    setupVenueSelect(a.venue||'');
+    setupChips('staff-chips', data.staff.map(s=>s.name), a.staff||[]);
+    setupChips('vehicle-chips', data.vehicles, a.vehicles||[]);
+    updatePlayerChips(a.extraPlayers||[], a.absentPlayers||[]);
+  }
+
+  document.getElementById('act-modal').classList.add('open');
+  // Scroll modal to top
+  document.getElementById('act-modal-body').scrollTop = 0;
+}
+
+function closeActModal() {
+  document.getElementById('act-modal').classList.remove('open');
+  editActId = null;
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('act-modal')) closeActModal();
+}
+
+function setupVenueSelect(selected='') {
+  const sel = document.getElementById('f-venue');
+  sel.innerHTML = '<option value="">選択してください</option>' +
+    data.venues.map(v=>`<option value="${v}"${v===selected?' selected':''}>${v}</option>`).join('') +
+    '<option value="その他">その他</option>';
+}
+
+function setupChips(containerId, options, selected) {
+  document.getElementById(containerId).innerHTML = options.map(o =>
+    `<span class="chip${selected.includes(o)?' selected':''}" onclick="toggleChip(this)">${o}</span>`
+  ).join('');
+  updatePlayerCount();
+}
+
+function toggleChip(chip) { chip.classList.toggle('selected'); updatePlayerCount(); }
+
+function getSelectedChips(id) {
+  return [...document.querySelectorAll(`#${id} .chip.selected`)].map(c=>c.textContent.trim());
+}
+
+function updatePlayerChips(extraSelected=[], absentSelected=[]) {
+  const cat = document.getElementById('f-cat').value;
+  const others = data.players.filter(p=>p.category!==cat);
+  document.getElementById('extra-player-chips').innerHTML = others.map(p =>
+    `<span class="chip${extraSelected.includes(p.name)?' selected':''}" onclick="toggleChip(this);updatePlayerCount()">${p.category} ${p.name}</span>`
+  ).join('');
+  const mine = data.players.filter(p=>p.category===cat);
+  document.getElementById('absent-chips').innerHTML = [
+    ...mine.map(p=>`<span class="chip${absentSelected.includes(p.name)?' selected':''}" onclick="toggleChip(this);updatePlayerCount()">${p.name}</span>`),
+    ...getSelectedChips('extra-player-chips').map(n=>`<span class="chip${absentSelected.includes(n)?' selected':''}" onclick="toggleChip(this);updatePlayerCount()">${n}</span>`)
+  ].join('');
+  updatePlayerCount();
+}
+
+function updatePlayerCount() {
+  const cat  = document.getElementById('f-cat').value;
+  const date = document.getElementById('f-date').value;
+  if (!cat) { document.getElementById('f-count').value=''; return; }
+  const base   = data.players.filter(p=>p.category===cat).length;
+  const extra  = getSelectedChips('extra-player-chips').length;
+  const absent = getSelectedChips('absent-chips').length;
+  let autoAbs  = 0;
+  if (date) {
+    data.players.filter(p=>p.category===cat).forEach(p=>{
+      if ((data.absences||[]).some(ab=>ab.playerName===p.name && date>=ab.startDate && date<=ab.endDate)) autoAbs++;
+    });
+  }
+  const total = Math.max(0, base+extra-absent-autoAbs);
+  document.getElementById('f-count').value = `${total}名（基本${base} + 追加${extra} - 欠席${absent+autoAbs}）`;
+}
+
+function checkConflicts() {
+  const date = document.getElementById('f-date').value;
+  const venue= document.getElementById('f-venue').value;
+  const s    = document.getElementById('f-start').value;
+  const e    = document.getElementById('f-end').value;
+  const warn = document.getElementById('conflict-warn');
+  if (!date||!venue||!s||!e) { warn.classList.remove('show'); return; }
+  const conflicts = data.activities.filter(a =>
+    a.id!==editActId && a.date===date && a.venue===venue && a.actType!=='OFF' && a.startTime<e && a.endTime>s
+  );
+  if (conflicts.length) {
+    warn.textContent = `⚠ 会場重複: ${conflicts.map(c=>`${c.category} ${c.startTime}〜${c.endTime}`).join('、')}`;
+    warn.classList.add('show');
+  } else { warn.classList.remove('show'); }
+  updatePlayerCount();
+}
+
+function collectFormData(newId) {
+  return {
+    id: newId || editActId || 'a'+Date.now(),
+    date:        document.getElementById('f-date').value,
+    category:    document.getElementById('f-cat').value,
+    actType:     document.getElementById('f-type').value,
+    name:        document.getElementById('f-name').value || `${document.getElementById('f-cat').value} ${document.getElementById('f-type').value}`,
+    startTime:   document.getElementById('f-start').value,
+    endTime:     document.getElementById('f-end').value,
+    venue:       document.getElementById('f-venue').value,
+    staff:       getSelectedChips('staff-chips'),
+    vehicles:    getSelectedChips('vehicle-chips'),
+    extraPlayers: getSelectedChips('extra-player-chips'),
+    absentPlayers: getSelectedChips('absent-chips'),
+    notes:       document.getElementById('f-notes').value,
+    playerCount: parseInt(document.getElementById('f-count').value) || 0
+  };
+}
+
+function saveActivity() {
+  const a = collectFormData();
+  if (!a.date || !a.category) { toast('日付とカテゴリーは必須です', true); return; }
+  if (editActId) {
+    const idx = data.activities.findIndex(x=>x.id===editActId);
+    data.activities[idx] = a;
+    toast('活動を更新しました ✓');
+  } else {
+    data.activities.push(a);
+    toast('活動を登録しました ✓');
+  }
+  data.activities.sort((a,b)=>a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime));
+  closeActModal();
+  renderCalendar();
+}
+
+function deleteActivity() {
+  if (!confirm('この活動を削除しますか？')) return;
+  data.activities = data.activities.filter(a=>a.id!==editActId);
+  closeActModal();
+  renderCalendar();
+  toast('削除しました');
+}
+
+// ===== DUPLICATE =====
+function duplicateActivity() {
+  if (!editActId) return;
+  const src = data.activities.find(x=>x.id===editActId);
+  if (!src) return;
+  // Close modal, reopen as new with same data
+  closeActModal();
+  // Short delay to allow modal close animation
+  setTimeout(()=>{
+    editActId = null;
+    document.getElementById('modal-title-text').textContent = '活動を複製（新規登録）';
+    document.getElementById('del-act-btn').style.display  = 'none';
+    document.getElementById('copy-btn').style.display     = 'none';
+    document.getElementById('conflict-warn').classList.remove('show');
+    // Fill all fields from source EXCEPT id
+    document.getElementById('f-date').value    = src.date;
+    document.getElementById('f-cat').value     = src.category;
+    document.getElementById('f-type').value    = src.actType;
+    document.getElementById('f-name').value    = src.name||'';
+    document.getElementById('f-start').value   = src.startTime;
+    document.getElementById('f-end').value     = src.endTime;
+    document.getElementById('f-notes').value   = src.notes||'';
+    setupVenueSelect(src.venue||'');
+    setupChips('staff-chips', data.staff.map(s=>s.name), src.staff||[]);
+    setupChips('vehicle-chips', data.vehicles, src.vehicles||[]);
+    updatePlayerChips(src.extraPlayers||[], src.absentPlayers||[]);
+    document.getElementById('act-modal').classList.add('open');
+    document.getElementById('act-modal-body').scrollTop = 0;
+    toast('複製しました。日付などを変更して保存してください');
+  }, 280);
+}
+
+// ===== Players =====
+let editPlayerId = null;
+function openPlayerForm(id=null) {
+  editPlayerId = id;
+  document.getElementById('player-form').style.display='block';
+  document.getElementById('del-player-btn').style.display = id?'inline-flex':'none';
+  const p = id ? data.players.find(x=>x.id===id) : null;
+  document.getElementById('pf-name').value = p?.name||'';
+  document.getElementById('pf-cat').value  = p?.category||'U15';
+}
+function savePlayer() {
+  const name = document.getElementById('pf-name').value.trim();
+  if (!name) { toast('名前を入力してください',true); return; }
+  const p = { id: editPlayerId||'p'+Date.now(), name, category: document.getElementById('pf-cat').value };
+  if (editPlayerId) data.players[data.players.findIndex(x=>x.id===editPlayerId)] = p;
+  else data.players.push(p);
+  document.getElementById('player-form').style.display='none';
+  editPlayerId=null;
+  renderPlayerList(); toast('選手を保存しました ✓');
+}
+function deletePlayer() {
+  if (!confirm('削除しますか？')) return;
+  data.players = data.players.filter(p=>p.id!==editPlayerId);
+  document.getElementById('player-form').style.display='none';
+  editPlayerId=null; renderPlayerList(); toast('削除しました');
+}
+function renderPlayerList() {
+  const el = document.getElementById('player-list');
+  const groups = {};
+  data.players.forEach(p=>{ if(!groups[p.category])groups[p.category]=[]; groups[p.category].push(p); });
+  el.innerHTML = ['U15','U14','U13','U12','U10'].filter(c=>groups[c]).map(cat=>{
+    const col = CAT_COLOR[cat];
+    return `<div style="margin-bottom:8px">
+      <div style="font-size:11px;font-weight:700;color:${col};margin-bottom:4px">${cat} (${groups[cat].length}名)</div>
+      ${groups[cat].map(p=>`<div class="item-card" onclick="openPlayerForm('${p.id}')">
+        <div><div class="item-name">${p.name}</div></div>
+        <span style="font-size:11px;color:var(--text-muted)">編集</span>
+      </div>`).join('')}
+    </div>`;
+  }).join('') || '<div style="padding:16px;text-align:center;color:var(--text-muted)">選手データなし</div>';
+}
+
+// ===== Staff =====
+let editStaffId=null;
+function openStaffForm(id=null) {
+  editStaffId=id;
+  document.getElementById('staff-subform').style.display='block';
+  document.getElementById('del-staff-btn').style.display=id?'inline-flex':'none';
+  const s = id?data.staff.find(x=>x.id===id):null;
+  document.getElementById('sf-name').value=s?.name||'';
+  document.getElementById('sf-role').value=s?.role||'コーチ';
+}
+function saveStaff() {
+  const name=document.getElementById('sf-name').value.trim();
+  if(!name){toast('名前を入力してください',true);return;}
+  const s={id:editStaffId||'s'+Date.now(),name,role:document.getElementById('sf-role').value};
+  if(editStaffId) data.staff[data.staff.findIndex(x=>x.id===editStaffId)]=s;
+  else data.staff.push(s);
+  document.getElementById('staff-subform').style.display='none';
+  editStaffId=null; renderStaffList(); toast('スタッフを保存しました ✓');
+}
+function deleteStaff() {
+  if(!confirm('削除しますか？'))return;
+  data.staff=data.staff.filter(s=>s.id!==editStaffId);
+  document.getElementById('staff-subform').style.display='none';
+  editStaffId=null; renderStaffList(); toast('削除しました');
+}
+function renderStaffList() {
+  document.getElementById('staff-list').innerHTML=data.staff.map(s=>`
+    <div class="item-card" onclick="openStaffForm('${s.id}')">
+      <div><div class="item-name">${s.name}</div><div class="item-sub">${s.role}</div></div>
+      <span style="font-size:11px;color:var(--text-muted)">編集</span>
+    </div>`).join('')||'<div style="padding:16px;text-align:center;color:var(--text-muted)">スタッフデータなし</div>';
+}
+
+// ===== Absences =====
+let editAbsId=null;
+function openAbsForm(id=null) {
+  editAbsId=id;
+  document.getElementById('abs-form').style.display='block';
+  document.getElementById('del-abs-btn').style.display=id?'inline-flex':'none';
+  const sel=document.getElementById('abf-player');
+  sel.innerHTML=data.players.map(p=>`<option value="${p.name}">${p.category} ${p.name}</option>`).join('');
+  const ab=id?data.absences.find(x=>x.id===id):null;
+  if(ab){sel.value=ab.playerName;document.getElementById('abf-start').value=ab.startDate;document.getElementById('abf-end').value=ab.endDate;document.getElementById('abf-reason').value=ab.reason;}
+  else{document.getElementById('abf-start').value='';document.getElementById('abf-end').value='';}
+}
+function saveAbsence() {
+  const pn=document.getElementById('abf-player').value;
+  const s=document.getElementById('abf-start').value;
+  const e=document.getElementById('abf-end').value;
+  if(!pn||!s||!e){toast('必須項目を入力してください',true);return;}
+  const ab={id:editAbsId||'ab'+Date.now(),playerName:pn,startDate:s,endDate:e,reason:document.getElementById('abf-reason').value};
+  if(editAbsId) data.absences[data.absences.findIndex(x=>x.id===editAbsId)]=ab;
+  else data.absences.push(ab);
+  document.getElementById('abs-form').style.display='none';
+  editAbsId=null; renderAbsList(); toast('休み情報を保存しました ✓');
+}
+function deleteAbsence() {
+  if(!confirm('削除しますか？'))return;
+  data.absences=data.absences.filter(a=>a.id!==editAbsId);
+  document.getElementById('abs-form').style.display='none';
+  editAbsId=null; renderAbsList(); toast('削除しました');
+}
+function renderAbsList() {
+  const el=document.getElementById('abs-list');
+  if(!data.absences.length){el.innerHTML='<div style="padding:16px;text-align:center;color:var(--text-muted)">休みデータなし</div>';return;}
+  el.innerHTML=[...data.absences].sort((a,b)=>a.startDate.localeCompare(b.startDate)).map(ab=>`
+    <div class="item-card" onclick="openAbsForm('${ab.id}')">
+      <div><div class="item-name">${ab.playerName}</div><div class="item-sub">${ab.startDate} 〜 ${ab.endDate} ／ ${ab.reason}</div></div>
+      <span style="font-size:11px;color:var(--text-muted)">編集</span>
+    </div>`).join('');
+}
+
+// ===== Venues =====
+function addVenue(){const v=document.getElementById('venue-input').value.trim();if(!v||data.venues.includes(v)){toast('すでに存在するか空白です',true);return;}data.venues.push(v);document.getElementById('venue-input').value='';renderVenueList();}
+function removeVenue(v){data.venues=data.venues.filter(x=>x!==v);renderVenueList();}
+function renderVenueList(){document.getElementById('venue-list').innerHTML=data.venues.map(v=>`<div class="item-card"><div class="item-name">📍 ${v}</div><button class="btn btn-danger btn-sm" onclick="removeVenue('${v}')">削除</button></div>`).join('');}
+
+// ===== Vehicles =====
+function addVehicle(){const v=document.getElementById('veh-input').value.trim();if(!v||data.vehicles.includes(v)){toast('すでに存在するか空白です',true);return;}data.vehicles.push(v);document.getElementById('veh-input').value='';renderVehList();}
+function removeVehicle(v){data.vehicles=data.vehicles.filter(x=>x!==v);renderVehList();}
+function renderVehList(){document.getElementById('veh-list').innerHTML=data.vehicles.map(v=>`<div class="item-card"><div class="item-name">🚐 ${v}</div><button class="btn btn-danger btn-sm" onclick="removeVehicle('${v}')">削除</button></div>`).join('');}
+
+// ===== Settings =====
+function saveSettings(){cfg.binId=document.getElementById('s-binid').value.trim();cfg.apiKey=document.getElementById('s-apikey').value.trim();localStorage.setItem(CONFIG_KEY,JSON.stringify(cfg));toast('設定を保存しました');updateSaveStatus();}
+
+// ===== Export =====
+function exportData(){const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`planner_${new Date().toISOString().slice(0,10)}.json`;a.click();}
+
+// ===== Start =====
+init();
+</script>
+</body>
+</html>
