@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>クラブ活動プランナー</title>
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #22263a;
+  --border: #2e3247;
+  --text: #e8eaf0;
+  --text-muted: #7a7f9a;
+  --accent: #4a7cdc;
+  --U15: #e05252;
+  --U14: #9b59dc;
+  --U13: #4a7cdc;
+  --U12: #3ab07a;
+  --U10: #e0bc3a;
+  --red: #e05252;
+  --yellow: #e0bc3a;
+  --green: #3ab07a;
+  --radius: 8px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif; min-height: 100vh; }
+
+/* Header */
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.header-logo { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+.header-logo span { color: var(--accent); }
+.header-nav { display: flex; gap: 8px; }
+.nav-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 6px 14px; border-radius: var(--radius); font-size: 13px; cursor: pointer; text-decoration: none; display: inline-block; }
+.nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.nav-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* Dashboard */
+.dashboard { padding: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+@media(max-width:600px){ .dashboard { grid-template-columns: repeat(2, 1fr); } }
+.dash-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; }
+.dash-num { font-size: 28px; font-weight: 700; color: var(--accent); line-height: 1; }
+.dash-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+/* Alerts */
+.alerts { padding: 0 16px 12px; display: flex; flex-direction: column; gap: 6px; }
+.alert { background: rgba(224,82,82,0.12); border: 1px solid rgba(224,82,82,0.3); border-radius: var(--radius); padding: 8px 12px; font-size: 12px; color: var(--red); display: flex; align-items: center; gap: 8px; }
+.alert-icon { font-size: 14px; flex-shrink: 0; }
+
+/* Calendar */
+.calendar-wrap { padding: 0 16px 16px; }
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cal-title { font-size: 18px; font-weight: 700; }
+.cal-nav { background: var(--surface2); border: 1px solid var(--border); color: var(--text); width: 32px; height: 32px; border-radius: var(--radius); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.cal-nav:hover { border-color: var(--accent); }
+
+.cal-filter { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.filter-btn { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; border: 2px solid transparent; background: var(--surface2); color: var(--text-muted); transition: all 0.15s; }
+.filter-btn[data-cat="U15"] { border-color: var(--U15); }
+.filter-btn[data-cat="U14"] { border-color: var(--U14); }
+.filter-btn[data-cat="U13"] { border-color: var(--U13); }
+.filter-btn[data-cat="U12"] { border-color: var(--U12); }
+.filter-btn[data-cat="U10"] { border-color: var(--U10); }
+.filter-btn.active[data-cat="U15"] { background: var(--U15); color: #fff; }
+.filter-btn.active[data-cat="U14"] { background: var(--U14); color: #fff; }
+.filter-btn.active[data-cat="U13"] { background: var(--U13); color: #fff; }
+.filter-btn.active[data-cat="U12"] { background: var(--U12); color: #fff; }
+.filter-btn.active[data-cat="U10"] { background: var(--U10); color: #111; }
+
+.cal-grid { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--border); }
+.cal-wd { text-align: center; padding: 8px 0; font-size: 11px; font-weight: 700; color: var(--text-muted); }
+.cal-wd:first-child { color: var(--red); }
+.cal-wd:last-child { color: #6ab4ff; }
+
+.cal-days { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal-day { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); min-height: 80px; padding: 4px; position: relative; }
+.cal-day:nth-child(7n) { border-right: none; }
+@media(max-width:600px){ .cal-day { min-height: 60px; } }
+.cal-day.other-month .day-num { color: var(--border); }
+.cal-day.today { background: rgba(74,124,220,0.08); }
+.cal-day.today .day-num { color: var(--accent); font-weight: 700; }
+.day-num { font-size: 12px; color: var(--text-muted); margin-bottom: 3px; }
+.cal-day:nth-child(7n+1) .day-num { color: var(--red); }
+.cal-day:nth-child(7n) .day-num { color: #6ab4ff; }
+
+.event-chip { font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 4px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.event-chip[data-cat="U15"] { background: rgba(224,82,82,0.2); color: var(--U15); border-left: 3px solid var(--U15); }
+.event-chip[data-cat="U14"] { background: rgba(155,89,220,0.2); color: var(--U14); border-left: 3px solid var(--U14); }
+.event-chip[data-cat="U13"] { background: rgba(74,124,220,0.2); color: var(--U13); border-left: 3px solid var(--U13); }
+.event-chip[data-cat="U12"] { background: rgba(58,176,122,0.2); color: var(--U12); border-left: 3px solid var(--U12); }
+.event-chip[data-cat="U10"] { background: rgba(224,188,58,0.2); color: var(--U10); border-left: 3px solid var(--U10); }
+.more-chip { font-size: 10px; color: var(--text-muted); padding: 1px 4px; cursor: pointer; }
+.more-chip:hover { color: var(--accent); }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal { background: var(--surface); border-radius: 16px 16px 0 0; width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto; padding: 20px; transform: translateY(100%); transition: transform 0.25s ease; }
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.modal-title { font-size: 16px; font-weight: 700; }
+.modal-close { background: var(--surface2); border: 1px solid var(--border); color: var(--text); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+
+.event-detail { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.ev-cat { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
+.ev-name { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+.ev-rows { display: flex; flex-direction: column; gap: 8px; }
+.ev-row { display: flex; gap: 10px; font-size: 13px; }
+.ev-row-label { color: var(--text-muted); width: 80px; flex-shrink: 0; }
+.ev-row-val { color: var(--text); }
+
+/* Load view */
+.load-section { padding: 0 16px 24px; }
+.load-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; }
+.load-table { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; width: 100%; border-collapse: collapse; }
+.load-table th { background: var(--surface2); padding: 8px 12px; font-size: 11px; text-align: left; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.load-table td { padding: 8px 12px; font-size: 12px; border-bottom: 1px solid var(--border); }
+.load-table tr:last-child td { border-bottom: none; }
+.load-bar-wrap { background: var(--bg); border-radius: 4px; height: 6px; width: 100px; overflow: hidden; }
+.load-bar { height: 100%; border-radius: 4px; }
+.load-green { background: var(--green); }
+.load-yellow { background: var(--yellow); }
+.load-red { background: var(--red); }
+.badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+.badge-green { background: rgba(58,176,122,0.2); color: var(--green); }
+.badge-yellow { background: rgba(224,188,58,0.2); color: var(--yellow); }
+.badge-red { background: rgba(224,82,82,0.2); color: var(--red); }
+
+/* Tab nav */
+.tab-nav { display: flex; gap: 0; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 16px; overflow-x: auto; }
+.tab-btn { padding: 12px 16px; font-size: 13px; font-weight: 700; color: var(--text-muted); background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* List view */
+.activity-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+.act-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+.act-card:hover { border-color: var(--accent); }
+.act-date-box { text-align: center; min-width: 44px; }
+.act-date-day { font-size: 22px; font-weight: 700; color: var(--text); line-height: 1; }
+.act-date-wd { font-size: 10px; color: var(--text-muted); }
+.act-body { flex: 1; }
+.act-cat { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
+.act-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.act-meta { font-size: 11px; color: var(--text-muted); display: flex; gap: 10px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">⚽ クラブ<span>プランナー</span></div>
+  <div class="header-nav">
+    <a class="nav-btn primary" href="planner_admin.html">管理画面</a>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('calendar')">📅 カレンダー</button>
+  <button class="tab-btn" onclick="switchTab('list')">📋 一覧</button>
+  <button class="tab-btn" onclick="switchTab('load')">📊 負荷管理</button>
+</div>
+
+<!-- Dashboard -->
+<div class="dashboard" id="dashboard">
+  <div class="dash-card">
+    <div class="dash-num" id="d-players">–</div>
+    <div class="dash-label">登録選手</div>
+  </div>
+  <div class="dash-card">
+    <div class="dash-num" id="d-staff">–</div>
+    <div class="dash-label">スタッフ</div>
+  </div>
+  <div class="dash-card">
+    <div class="dash-num" id="d-today">–</div>
+    <div class="dash-label">本日の活動</div>
+  </div>
+  <div class="dash-card">
+    <div class="dash-num" id="d-alerts">–</div>
+    <div class="dash-label">アラート</div>
+  </div>
+</div>
+
+<!-- Alerts -->
+<div class="alerts" id="alerts-area"></div>
+
+<!-- Calendar Tab -->
+<div class="tab-content active" id="tab-calendar">
+  <div class="calendar-wrap">
+    <div class="cal-header">
+      <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
+      <div class="cal-title" id="cal-title">2025年7月</div>
+      <button class="cal-nav" onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="cal-filter" id="cat-filter">
+      <button class="filter-btn active" data-cat="ALL" onclick="toggleFilter(this)">ALL</button>
+      <button class="filter-btn active" data-cat="U15" onclick="toggleFilter(this)">U15</button>
+      <button class="filter-btn active" data-cat="U14" onclick="toggleFilter(this)">U14</button>
+      <button class="filter-btn active" data-cat="U13" onclick="toggleFilter(this)">U13</button>
+      <button class="filter-btn active" data-cat="U12" onclick="toggleFilter(this)">U12</button>
+      <button class="filter-btn active" data-cat="U10" onclick="toggleFilter(this)">U10</button>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-weekdays">
+        <div class="cal-wd">日</div><div class="cal-wd">月</div><div class="cal-wd">火</div>
+        <div class="cal-wd">水</div><div class="cal-wd">木</div><div class="cal-wd">金</div><div class="cal-wd">土</div>
+      </div>
+      <div class="cal-days" id="cal-days"></div>
+    </div>
+  </div>
+</div>
+
+<!-- List Tab -->
+<div class="tab-content" id="tab-list">
+  <div class="activity-list" id="act-list"></div>
+</div>
+
+<!-- Load Tab -->
+<div class="tab-content" id="tab-load">
+  <div class="load-section">
+    <div class="load-title">選手負荷状況（今月）</div>
+    <table class="load-table" id="load-table">
+      <thead><tr><th>選手名</th><th>カテゴリ</th><th>活動日数</th><th>連続日数</th><th>負荷</th></tr></thead>
+      <tbody id="load-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Event Detail Modal -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">活動詳細</div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ===== JSONBin 固定設定（全端末共通） =====
+const BIN_ID     = "6a329ff3da38895dfed0580f";
+const ACCESS_KEY = "$2a$10$sr0vNOjVIL6jfVcM9YSLLOZoyoq5QhNLCAyIPT7IDiihc6XRA/0U.";
+
+const BIN = {
+  async get() {
+    try {
+      const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { 'X-Access-Key': ACCESS_KEY }
+      });
+      if (!r.ok) throw new Error('fetch failed');
+      const j = await r.json();
+      return j.record;
+    } catch(e) {
+      return null;
+    }
+  }
+};
+
+// ===== State =====
+const TODAY = new Date();
+let curYear = TODAY.getFullYear();
+let curMonth = TODAY.getMonth();
+let data = { activities: [], players: [], staff: [], vehicles: [], venues: [], absences: [] };
+let activeFilters = new Set(['U15','U14','U13','U12','U10']);
+
+const CATS = ['U15','U14','U13','U12','U10'];
+const CAT_COLOR = { U15:'#e05252', U14:'#9b59dc', U13:'#4a7cdc', U12:'#3ab07a', U10:'#e0bc3a' };
+const WD = ['日','月','火','水','木','金','土'];
+const TYPES = { TR:'TR', TRM:'TRM', GAME:'公式戦', TOUR:'遠征', OFF:'OFF', PRACTICE:'練習試合' };
+
+// ===== Load data =====
+async function loadData() {
+  const remote = await BIN.get();
+  if (remote) {
+    data = { activities:[], players:[], staff:[], vehicles:[], venues:[], absences:[], ...remote };
+  } else {
+    // Demo data
+    data = getDemoData();
+  }
+  renderAll();
+}
+
+function renderAll() {
+  renderDashboard();
+  renderAlerts();
+  renderCalendar();
+  renderList();
+  renderLoad();
+}
+
+// ===== Dashboard =====
+function renderDashboard() {
+  const todayStr = fmtDate(TODAY);
+  const todayActs = data.activities.filter(a => a.date === todayStr);
+  const alerts = getAlerts();
+  document.getElementById('d-players').textContent = (data.players||[]).length;
+  document.getElementById('d-staff').textContent = (data.staff||[]).length;
+  document.getElementById('d-today').textContent = todayActs.length;
+  document.getElementById('d-alerts').textContent = alerts.length;
+}
+
+// ===== Alerts =====
+function getAlerts() {
+  const alerts = [];
+  const acts = data.activities || [];
+
+  // Venue conflict
+  const byDateVenue = {};
+  acts.forEach(a => {
+    if (!a.venue || a.actType === 'OFF') return;
+    const key = a.date + '|' + a.venue;
+    if (!byDateVenue[key]) byDateVenue[key] = [];
+    byDateVenue[key].push(a);
+  });
+  Object.entries(byDateVenue).forEach(([k,arr]) => {
+    if (arr.length > 1) {
+      const [date,venue] = k.split('|');
+      // Check time overlap
+      const sorted = arr.sort((a,b) => a.startTime.localeCompare(b.startTime));
+      for (let i=0;i<sorted.length-1;i++) {
+        if (sorted[i].endTime > sorted[i+1].startTime) {
+          alerts.push({ type:'venue', msg:`会場重複: ${date} ${venue} (${sorted[i].category} / ${sorted[i+1].category})` });
+        }
+      }
+    }
+  });
+
+  // Vehicle conflict
+  const byDateVeh = {};
+  acts.forEach(a => {
+    (a.vehicles||[]).forEach(v => {
+      const key = a.date + '|' + v;
+      if (!byDateVeh[key]) byDateVeh[key] = [];
+      byDateVeh[key].push(a);
+    });
+  });
+  Object.entries(byDateVeh).forEach(([k,arr]) => {
+    if (arr.length > 1) {
+      const [date,veh] = k.split('|');
+      const sorted = arr.sort((a,b)=>a.startTime.localeCompare(b.startTime));
+      for (let i=0;i<sorted.length-1;i++) {
+        if (sorted[i].endTime > sorted[i+1].startTime) {
+          alerts.push({ type:'vehicle', msg:`車両重複: ${date} ${veh} (${sorted[i].category} / ${sorted[i+1].category})` });
+        }
+      }
+    }
+  });
+
+  return alerts;
+}
+
+function renderAlerts() {
+  const alerts = getAlerts();
+  const el = document.getElementById('alerts-area');
+  el.innerHTML = alerts.map(a => `
+    <div class="alert"><span class="alert-icon">⚠</span>${a.msg}</div>
+  `).join('');
+  document.getElementById('d-alerts').textContent = alerts.length;
+}
+
+// ===== Calendar =====
+function changeMonth(d) {
+  curMonth += d;
+  if (curMonth < 0) { curMonth = 11; curYear--; }
+  if (curMonth > 11) { curMonth = 0; curYear++; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  document.getElementById('cal-title').textContent = `${curYear}年${curMonth+1}月`;
+  const first = new Date(curYear, curMonth, 1);
+  const last = new Date(curYear, curMonth+1, 0);
+  const startWd = first.getDay();
+  const cells = [];
+  for (let i=0;i<startWd;i++) {
+    const d = new Date(curYear, curMonth, -startWd+1+i);
+    cells.push({ date: d, other: true });
+  }
+  for (let d=1;d<=last.getDate();d++) cells.push({ date: new Date(curYear,curMonth,d), other:false });
+  while (cells.length % 7 !== 0) {
+    const d = new Date(curYear, curMonth+1, cells.length - (startWd + last.getDate()) + 1);
+    cells.push({ date: d, other: true });
+  }
+
+  const acts = data.activities || [];
+  const container = document.getElementById('cal-days');
+  container.innerHTML = cells.map(c => {
+    const ds = fmtDate(c.date);
+    const dayActs = acts.filter(a => a.date === ds && activeFilters.has(a.category));
+    const isToday = ds === fmtDate(TODAY);
+    const chips = dayActs.slice(0,3).map(a => `
+      <div class="event-chip" data-cat="${a.category}" onclick="openEvent('${a.id}')" title="${a.category} ${a.name}">
+        ${a.category} ${a.actType||''}
+      </div>
+    `).join('');
+    const more = dayActs.length > 3 ? `<div class="more-chip">+${dayActs.length-3}件</div>` : '';
+    return `<div class="cal-day${c.other?' other-month':''}${isToday?' today':''}">
+      <div class="day-num">${c.date.getDate()}</div>
+      ${chips}${more}
+    </div>`;
+  }).join('');
+}
+
+function toggleFilter(btn) {
+  const cat = btn.dataset.cat;
+  if (cat === 'ALL') {
+    const allActive = CATS.every(c => activeFilters.has(c));
+    if (allActive) {
+      activeFilters.clear();
+      document.querySelectorAll('.filter-btn[data-cat]').forEach(b => b.classList.remove('active'));
+    } else {
+      CATS.forEach(c => activeFilters.add(c));
+      document.querySelectorAll('.filter-btn[data-cat]').forEach(b => b.classList.add('active'));
+    }
+  } else {
+    if (activeFilters.has(cat)) { activeFilters.delete(cat); btn.classList.remove('active'); }
+    else { activeFilters.add(cat); btn.classList.add('active'); }
+    const allActive = CATS.every(c => activeFilters.has(c));
+    document.querySelector('.filter-btn[data-cat="ALL"]').classList.toggle('active', allActive);
+  }
+  renderCalendar();
+}
+
+// ===== List =====
+function renderList() {
+  const acts = [...(data.activities||[])].sort((a,b)=>a.date.localeCompare(b.date));
+  const el = document.getElementById('act-list');
+  if (!acts.length) { el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted)">活動なし</div>'; return; }
+  el.innerHTML = acts.map(a => {
+    const d = new Date(a.date);
+    const color = CAT_COLOR[a.category] || '#888';
+    return `<div class="act-card" onclick="openEvent('${a.id}')">
+      <div class="act-date-box">
+        <div class="act-date-day">${d.getDate()}</div>
+        <div class="act-date-wd">${['日','月','火','水','木','金','土'][d.getDay()]}</div>
+      </div>
+      <div class="act-body">
+        <span class="act-cat" style="background:${color}22;color:${color}">${a.category}</span>
+        <div class="act-name">${a.name||a.actType}</div>
+        <div class="act-meta">
+          <span>🕐 ${a.startTime}〜${a.endTime}</span>
+          ${a.venue?`<span>📍 ${a.venue}</span>`:''}
+          ${a.staff&&a.staff.length?`<span>👤 ${a.staff.join('/')} </span>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== Load Management =====
+function renderLoad() {
+  const players = data.players || [];
+  const acts = data.activities || [];
+  const absences = data.absences || [];
+  const tbody = document.getElementById('load-tbody');
+
+  const rows = players.map(p => {
+    const myActs = acts.filter(a => {
+      const d = new Date(a.date);
+      if (d.getFullYear() !== curYear || d.getMonth() !== curMonth) return false;
+      if (a.actType === 'OFF') return false;
+      if ((a.players||[]).includes(p.name) || a.category === p.category) return true;
+      return false;
+    });
+    const absActs = absences.filter(ab => ab.playerName === p.name);
+    const activeDays = myActs.filter(a => {
+      return !absActs.some(ab => a.date >= ab.startDate && a.date <= ab.endDate);
+    });
+
+    // Consecutive days
+    const dates = [...new Set(activeDays.map(a=>a.date))].sort();
+    let maxConsec = 0, consec = 1;
+    for (let i=1;i<dates.length;i++) {
+      const prev = new Date(dates[i-1]);
+      const cur = new Date(dates[i]);
+      const diff = (cur - prev) / 86400000;
+      if (diff === 1) { consec++; maxConsec = Math.max(maxConsec, consec); }
+      else consec = 1;
+    }
+    maxConsec = Math.max(maxConsec, consec > 1 ? consec : (dates.length>0?1:0));
+
+    const total = dates.length;
+    let level = 'green';
+    if (total >= 20 || maxConsec >= 7) level = 'red';
+    else if (total >= 15 || maxConsec >= 5) level = 'yellow';
+    const pct = Math.min(100, total / 25 * 100);
+    const badge = { green:'badge-green', yellow:'badge-yellow', red:'badge-red' }[level];
+    const label = { green:'正常', yellow:'注意', red:'要注意' }[level];
+
+    return `<tr>
+      <td>${p.name}</td>
+      <td><span style="color:${CAT_COLOR[p.category]||'#888'}">${p.category}</span></td>
+      <td>${total}日</td>
+      <td>${maxConsec}日</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="load-bar-wrap"><div class="load-bar load-${level}" style="width:${pct}%"></div></div>
+          <span class="badge ${badge}">${label}</span>
+        </div>
+      </td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = rows.join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:16px">選手データなし</td></tr>';
+}
+
+// ===== Modal =====
+function openEvent(id) {
+  const a = (data.activities||[]).find(x => x.id === id);
+  if (!a) return;
+  const color = CAT_COLOR[a.category] || '#888';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="event-detail">
+      <span class="ev-cat" style="background:${color}22;color:${color}">${a.category}</span>
+      <div class="ev-name">${a.name||a.actType}</div>
+      <div class="ev-rows">
+        <div class="ev-row"><span class="ev-row-label">日付</span><span class="ev-row-val">${a.date} (${WD[new Date(a.date).getDay()]})</span></div>
+        <div class="ev-row"><span class="ev-row-label">時間</span><span class="ev-row-val">${a.startTime} 〜 ${a.endTime}</span></div>
+        ${a.actType?`<div class="ev-row"><span class="ev-row-label">種別</span><span class="ev-row-val">${a.actType}</span></div>`:''}
+        ${a.venue?`<div class="ev-row"><span class="ev-row-label">会場</span><span class="ev-row-val">📍 ${a.venue}</span></div>`:''}
+        ${a.staff&&a.staff.length?`<div class="ev-row"><span class="ev-row-label">スタッフ</span><span class="ev-row-val">👤 ${a.staff.join('、')}</span></div>`:''}
+        ${a.vehicles&&a.vehicles.length?`<div class="ev-row"><span class="ev-row-label">車両</span><span class="ev-row-val">🚐 ${a.vehicles.join('、')}</span></div>`:''}
+        ${a.playerCount!=null?`<div class="ev-row"><span class="ev-row-label">参加人数</span><span class="ev-row-val">${a.playerCount}名</span></div>`:''}
+        ${a.notes?`<div class="ev-row"><span class="ev-row-label">備考</span><span class="ev-row-val">${a.notes}</span></div>`:''}
+      </div>
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+// ===== Tab =====
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick*="${name}"]`).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ===== Helpers =====
+function fmtDate(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+// ===== Demo Data =====
+function getDemoData() {
+  const y = TODAY.getFullYear();
+  const m = String(TODAY.getMonth()+1).padStart(2,'0');
+  return {
+    players: [
+      {id:'p1',name:'田中 翔太',category:'U15'},{id:'p2',name:'山田 健二',category:'U15'},
+      {id:'p3',name:'鈴木 大輝',category:'U15'},{id:'p4',name:'渡辺 陸',category:'U14'},
+      {id:'p5',name:'佐藤 優斗',category:'U14'},{id:'p6',name:'高橋 涼',category:'U13'},
+      {id:'p7',name:'伊藤 蒼',category:'U12'},{id:'p8',name:'中村 悠人',category:'U10'},
+    ],
+    staff: [
+      {id:'s1',name:'監督 山本',role:'監督'},{id:'s2',name:'コーチ 川田',role:'コーチ'},
+      {id:'s3',name:'コーチ 林',role:'コーチ'},{id:'s4',name:'GKコーチ 西村',role:'GKコーチ'},
+    ],
+    vehicles: ['マイクロバス','ハイエース①','ハイエース②','軽トラック'],
+    venues: ['白州総合グラウンド','長坂総合スポーツ公園'],
+    absences: [
+      {id:'ab1',playerName:'田中 翔太',startDate:`${y}-${m}-10`,endDate:`${y}-${m}-12`,reason:'家族旅行'}
+    ],
+    activities: [
+      {id:'a1',date:`${y}-${m}-03`,category:'U15',actType:'TR',name:'U15 TR',startTime:'16:00',endTime:'18:00',venue:'白州総合グラウンド',staff:['監督 山本','コーチ 川田'],vehicles:['ハイエース①'],playerCount:18,notes:''},
+      {id:'a2',date:`${y}-${m}-03`,category:'U13',actType:'TR',name:'U13 TR',startTime:'16:00',endTime:'18:00',venue:'長坂総合スポーツ公園',staff:['コーチ 林'],vehicles:['ハイエース②'],playerCount:14,notes:''},
+      {id:'a3',date:`${y}-${m}-05`,category:'U15',actType:'TRM',name:'U15 TRM',startTime:'10:00',endTime:'13:00',venue:'白州総合グラウンド',staff:['監督 山本','コーチ 川田'],vehicles:['マイクロバス','ハイエース①'],playerCount:18,notes:'vs 甲府FC'},
+      {id:'a4',date:`${y}-${m}-07`,category:'U14',actType:'TR',name:'U14 TR',startTime:'15:00',endTime:'17:30',venue:'白州総合グラウンド',staff:['コーチ 川田'],vehicles:['ハイエース②'],playerCount:16,notes:''},
+      {id:'a5',date:`${y}-${m}-10`,category:'U15',actType:'GAME',name:'U15 公式戦',startTime:'09:00',endTime:'12:00',venue:'長坂総合スポーツ公園',staff:['監督 山本','コーチ 川田','GKコーチ 西村'],vehicles:['マイクロバス','ハイエース①'],playerCount:20,notes:'山梨県リーグ第3節'},
+      {id:'a6',date:`${y}-${m}-10`,category:'U12',actType:'TR',name:'U12 TR',startTime:'09:00',endTime:'11:00',venue:'白州総合グラウンド',staff:['コーチ 林'],vehicles:['ハイエース②'],playerCount:12,notes:''},
+      {id:'a7',date:`${y}-${m}-14`,category:'U13',actType:'TRM',name:'U13 TRM',startTime:'13:00',endTime:'16:00',venue:'白州総合グラウンド',staff:['コーチ 林'],vehicles:['ハイエース②'],playerCount:14,notes:'vs 諏訪SC'},
+      {id:'a8',date:`${y}-${m}-17`,category:'U15',actType:'TR',name:'U15 TR',startTime:'16:00',endTime:'18:00',venue:'白州総合グラウンド',staff:['監督 山本'],vehicles:['ハイエース①'],playerCount:18,notes:''},
+      {id:'a9',date:`${y}-${m}-20`,category:'U15',actType:'TOUR',name:'U15 遠征',startTime:'07:00',endTime:'20:00',venue:'静岡FC',staff:['監督 山本','コーチ 川田','GKコーチ 西村'],vehicles:['マイクロバス','ハイエース①'],playerCount:20,notes:'静岡遠征1日目'},
+      {id:'a10',date:`${y}-${m}-21`,category:'U15',actType:'TOUR',name:'U15 遠征2日目',startTime:'08:00',endTime:'19:00',venue:'静岡FC',staff:['監督 山本','コーチ 川田'],vehicles:['マイクロバス'],playerCount:20,notes:''},
+      {id:'a11',date:`${y}-${m}-24`,category:'U14',actType:'GAME',name:'U14 公式戦',startTime:'10:00',endTime:'13:00',venue:'長坂総合スポーツ公園',staff:['コーチ 川田'],vehicles:['ハイエース①','ハイエース②'],playerCount:16,notes:'山梨県U14リーグ'},
+      {id:'a12',date:`${y}-${m}-24`,category:'U12',actType:'TRM',name:'U12 TRM',startTime:'10:00',endTime:'12:00',venue:'長坂総合スポーツ公園',staff:['コーチ 林'],vehicles:['軽トラック'],playerCount:12,notes:''},
+    ]
+  };
+}
+
+// ===== Init =====
+loadData();
+</script>
+</body>
+</html>
