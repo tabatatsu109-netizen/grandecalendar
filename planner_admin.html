@@ -8,7 +8,7 @@
 :root {
   --bg:#0f1117; --surface:#1a1d27; --surface2:#22263a; --border:#2e3247;
   --text:#e8eaf0; --text-muted:#7a7f9a; --accent:#4a7cdc;
-  --U15:#e05252; --U14:#9b59dc; --U13:#4a7cdc; --U12:#3ab07a; --U10:#e0bc3a;
+  --U15:#e05252; --U14:#9b59dc; --U13:#4a7cdc; --U12:#3ab07a; --U11:#2ba8a8; --U10:#e0bc3a; --U9:#e08c3a; --U8:#c97ad6;
   --red:#e05252; --green:#3ab07a; --yellow:#e0bc3a; --radius:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -59,7 +59,10 @@ body{background:var(--bg);color:var(--text);font-family:'Hiragino Kaku Gothic Pr
 .event-chip[data-cat="U14"]{background:rgba(155,89,220,.18);color:var(--U14);border-color:var(--U14);}
 .event-chip[data-cat="U13"]{background:rgba(74,124,220,.18);color:var(--U13);border-color:var(--U13);}
 .event-chip[data-cat="U12"]{background:rgba(58,176,122,.18);color:var(--U12);border-color:var(--U12);}
+.event-chip[data-cat="U11"]{background:rgba(43,168,168,.18);color:var(--U11);border-color:var(--U11);}
 .event-chip[data-cat="U10"]{background:rgba(224,188,58,.18);color:var(--U10);border-color:var(--U10);}
+.event-chip[data-cat="U9"]{background:rgba(224,140,58,.18);color:var(--U9);border-color:var(--U9);}
+.event-chip[data-cat="U8"]{background:rgba(201,122,214,.18);color:var(--U8);border-color:var(--U8);}
 .event-chip.personal-event{background:rgba(122,127,154,.18);color:var(--text-muted);border-color:var(--text-muted);}
 @media(max-width:600px){.cal-day{min-height:68px;}.event-chip{font-size:9px;padding:1px 3px;}}
 
@@ -269,6 +272,7 @@ input[readonly]{color:var(--accent);font-weight:700;}
     </div>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn btn-danger btn-sm" onclick="exportData()">データをエクスポート（JSON）</button>
+      <button class="btn btn-sm" style="background:rgba(58,176,122,.15);border:1px solid rgba(58,176,122,.3);color:var(--green)" onclick="addMissingDefaultPlayers()">未登録選手だけ追加（安全）</button>
       <button class="btn btn-sm" style="background:var(--surface2);border:1px solid var(--border)" onclick="initDefaultPlayers()">選手データを初期化</button>
     </div>
   </div>
@@ -294,8 +298,11 @@ input[readonly]{color:var(--accent);font-weight:700;}
           <span class="chip" data-cat="U15" onclick="toggleCatChip(this)">U15（中3）</span>
           <span class="chip" data-cat="U14" onclick="toggleCatChip(this)">U14（中2）</span>
           <span class="chip" data-cat="U13" onclick="toggleCatChip(this)">U13（中1）</span>
-          <span class="chip" data-cat="U12" onclick="toggleCatChip(this)">U12</span>
-          <span class="chip" data-cat="U10" onclick="toggleCatChip(this)">U10</span>
+          <span class="chip" data-cat="U12" onclick="toggleCatChip(this)">U12（小6）</span>
+          <span class="chip" data-cat="U11" onclick="toggleCatChip(this)">U11（小5）</span>
+          <span class="chip" data-cat="U10" onclick="toggleCatChip(this)">U10（小4）</span>
+          <span class="chip" data-cat="U9" onclick="toggleCatChip(this)">U9（小3）</span>
+          <span class="chip" data-cat="U8" onclick="toggleCatChip(this)">U8（小2）</span>
         </div>
       </div>
       <div class="form-group">
@@ -445,9 +452,9 @@ input[readonly]{color:var(--accent);font-weight:700;}
 // ============================================================
 // MASTER DATA
 // ============================================================
-const CAT_COLOR  = { U15:'#e05252', U14:'#9b59dc', U13:'#4a7cdc', U12:'#3ab07a', U10:'#e0bc3a' };
-const CAT_BG     = { U15:'rgba(224,82,82,.15)', U14:'rgba(155,89,220,.15)', U13:'rgba(74,124,220,.15)', U12:'rgba(58,176,122,.15)', U10:'rgba(224,188,58,.15)' };
-const GRADE_MAP  = { U15:'中学3年', U14:'中学2年', U13:'中学1年', U12:'小学6年', U10:'小学4-5年' };
+const CAT_COLOR  = { U15:'#e05252', U14:'#9b59dc', U13:'#4a7cdc', U12:'#3ab07a', U11:'#2ba8a8', U10:'#e0bc3a', U9:'#e08c3a', U8:'#c97ad6' };
+const CAT_BG     = { U15:'rgba(224,82,82,.15)', U14:'rgba(155,89,220,.15)', U13:'rgba(74,124,220,.15)', U12:'rgba(58,176,122,.15)', U11:'rgba(43,168,168,.15)', U10:'rgba(224,188,58,.15)', U9:'rgba(224,140,58,.15)', U8:'rgba(201,122,214,.15)' };
+const GRADE_MAP  = { U15:'中学3年', U14:'中学2年', U13:'中学1年', U12:'小学6年', U11:'小学5年', U10:'小学4年', U9:'小学3年', U8:'小学2年' };
 const TODAY      = new Date();
 
 // 複数カテゴリー対応: 既存データ(category:"U13")も新形式(categories:["U13","U12"])も同じ配列として扱う
@@ -488,6 +495,52 @@ const DEFAULT_PLAYERS = [
   {id:'dp_u13_09',name:'中村 友希',  grade:'中学1年',category:'U13'},
   {id:'dp_u13_10',name:'下山 晟ノ介',grade:'中学1年',category:'U13'},
   {id:'dp_u13_11',name:'清水 博史',  grade:'中学1年',category:'U13'},
+  // U12（小6）
+  {id:'dp_u12_01',name:'小林大樹',  grade:'小学6年',category:'U12'},
+  {id:'dp_u12_02',name:'児玉大樹',  grade:'小学6年',category:'U12'},
+  {id:'dp_u12_03',name:'清水頼希',  grade:'小学6年',category:'U12'},
+  {id:'dp_u12_04',name:'菊原瑛斗',  grade:'小学6年',category:'U12'},
+  {id:'dp_u12_05',name:'小林旭陽',  grade:'小学6年',category:'U12'},
+  {id:'dp_u12_06',name:'清水晴太',  grade:'小学6年',category:'U12'},
+  {id:'dp_u12_07',name:'金澤朔久',  grade:'小学6年',category:'U12'},
+  {id:'dp_u12_08',name:'業天壮馬',  grade:'小学6年',category:'U12'},
+  {id:'dp_u12_09',name:'齋藤結音',  grade:'小学6年',category:'U12'},
+  {id:'dp_u12_10',name:'平嶋遙人',  grade:'小学6年',category:'U12'},
+  {id:'dp_u12_11',name:'名取郁',    grade:'小学6年',category:'U12'},
+  // U11（小5）
+  {id:'dp_u11_01',name:'白倉琉光',  grade:'小学5年',category:'U11'},
+  {id:'dp_u11_02',name:'名取秀真',  grade:'小学5年',category:'U11'},
+  {id:'dp_u11_03',name:'坂本來海',  grade:'小学5年',category:'U11'},
+  {id:'dp_u11_04',name:'植田理仁',  grade:'小学5年',category:'U11'},
+  {id:'dp_u11_05',name:'小塩英太',  grade:'小学5年',category:'U11'},
+  {id:'dp_u11_06',name:'山口宙真',  grade:'小学5年',category:'U11'},
+  {id:'dp_u11_07',name:'清水一智',  grade:'小学5年',category:'U11'},
+  {id:'dp_u11_08',name:'油井勇人',  grade:'小学5年',category:'U11'},
+  {id:'dp_u11_09',name:'佐々木うき',grade:'小学5年',category:'U11'},
+  // U10（小4）
+  {id:'dp_u10_01',name:'櫻本匠',    grade:'小学4年',category:'U10'},
+  {id:'dp_u10_02',name:'小林陽向',  grade:'小学4年',category:'U10'},
+  {id:'dp_u10_03',name:'小宮山愛斗',grade:'小学4年',category:'U10'},
+  {id:'dp_u10_04',name:'小宮山基',  grade:'小学4年',category:'U10'},
+  {id:'dp_u10_05',name:'村松草平',  grade:'小学4年',category:'U10'},
+  {id:'dp_u10_06',name:'萩原照',    grade:'小学4年',category:'U10'},
+  {id:'dp_u10_07',name:'山本樹生',  grade:'小学4年',category:'U10'},
+  {id:'dp_u10_08',name:'平嶋奏大',  grade:'小学4年',category:'U10'},
+  {id:'dp_u10_09',name:'若林 楽',   grade:'小学4年',category:'U10'},
+  {id:'dp_u10_10',name:'梁川朔',    grade:'小学4年',category:'U10'},
+  {id:'dp_u10_11',name:'功刀新大',  grade:'小学4年',category:'U10'},
+  {id:'dp_u10_12',name:'土屋朝陽',  grade:'小学4年',category:'U10'},
+  {id:'dp_u10_13',name:'輿石源太',  grade:'小学4年',category:'U10'},
+  // U9（小3）
+  {id:'dp_u9_01',name:'菊原颯馬',   grade:'小学3年',category:'U9'},
+  {id:'dp_u9_02',name:'織田蒼佑',   grade:'小学3年',category:'U9'},
+  {id:'dp_u9_03',name:'堀込真士郎', grade:'小学3年',category:'U9'},
+  {id:'dp_u9_04',name:'高橋平',     grade:'小学3年',category:'U9'},
+  {id:'dp_u9_05',name:'小野耀次朗', grade:'小学3年',category:'U9'},
+  {id:'dp_u9_06',name:'坂本律來',   grade:'小学3年',category:'U9'},
+  // U8（小2）
+  {id:'dp_u8_01',name:'黒倉詩滴',   grade:'小学2年',category:'U8'},
+  {id:'dp_u8_02',name:'清水梛生',   grade:'小学2年',category:'U8'},
 ];
 
 // 全端末共通のJSONBin固定設定（ここを変更すると参照先が変わります）
@@ -559,6 +612,17 @@ function initDefaultPlayers() {
   data.players = DEFAULT_PLAYERS.map(p => ({...p, actCount:0, actMinutes:0, actDays:[], notes:''}));
   renderPlayerList();
   toast('初期選手データを登録しました ✓');
+}
+
+function addMissingDefaultPlayers() {
+  const existingIds = new Set(data.players.map(p=>p.id));
+  const existingNames = new Set(data.players.map(p=>p.name));
+  const toAdd = DEFAULT_PLAYERS.filter(p => !existingIds.has(p.id) && !existingNames.has(p.name));
+  if (!toAdd.length) { toast('追加対象の選手はありません（すでに登録済みです）'); return; }
+  if (!confirm(`未登録の選手 ${toAdd.length}名を追加します。既存の選手データは変更されません。よろしいですか？`)) return;
+  data.players.push(...toAdd.map(p => ({...p, actCount:0, actMinutes:0, actDays:[], notes:''})));
+  renderPlayerList();
+  toast(`${toAdd.length}名の選手を追加しました ✓（保存ボタンを押してください）`);
 }
 
 function renderAll() {
@@ -953,6 +1017,8 @@ function openPlayerModal(id=null) {
           <option value="小学6年"${p?.grade==='小学6年'?' selected':''}>小学6年</option>
           <option value="小学5年"${p?.grade==='小学5年'?' selected':''}>小学5年</option>
           <option value="小学4年"${p?.grade==='小学4年'?' selected':''}>小学4年</option>
+          <option value="小学3年"${p?.grade==='小学3年'?' selected':''}>小学3年</option>
+          <option value="小学2年"${p?.grade==='小学2年'?' selected':''}>小学2年</option>
         </select>
       </div>
       <div class="form-group">
@@ -962,7 +1028,10 @@ function openPlayerModal(id=null) {
           <option value="U14"${p?.category==='U14'?' selected':''}>U14</option>
           <option value="U13"${p?.category==='U13'?' selected':''}>U13</option>
           <option value="U12"${p?.category==='U12'?' selected':''}>U12</option>
+          <option value="U11"${p?.category==='U11'?' selected':''}>U11</option>
           <option value="U10"${p?.category==='U10'?' selected':''}>U10</option>
+          <option value="U9"${p?.category==='U9'?' selected':''}>U9</option>
+          <option value="U8"${p?.category==='U8'?' selected':''}>U8</option>
         </select>
       </div>
       <div class="form-group full"><label>メモ</label><textarea id="pm-notes" placeholder="ポジション・特記事項など">${p?.notes||''}</textarea></div>
@@ -1002,7 +1071,7 @@ function openPlayerModal(id=null) {
 
 function syncCatFromGrade() {
   const grade=document.getElementById('pm-grade').value;
-  const map={'中学3年':'U15','中学2年':'U14','中学1年':'U13','小学6年':'U12','小学5年':'U12','小学4年':'U10'};
+  const map={'中学3年':'U15','中学2年':'U14','中学1年':'U13','小学6年':'U12','小学5年':'U11','小学4年':'U10','小学3年':'U9','小学2年':'U8'};
   if(map[grade]) document.getElementById('pm-cat').value=map[grade];
 }
 
@@ -1053,7 +1122,7 @@ function renderPlayerList() {
   const el=document.getElementById('player-list');
   // Summary pills
   const sumEl=document.getElementById('player-summary');
-  sumEl.innerHTML=['U15','U14','U13','U12','U10'].map(cat=>{
+  sumEl.innerHTML=['U15','U14','U13','U12','U11','U10','U9','U8'].map(cat=>{
     const cnt=data.players.filter(p=>p.category===cat).length;
     if(!cnt)return'';
     return`<span class="stat-pill" style="border-color:${CAT_COLOR[cat]}22"><span style="color:${CAT_COLOR[cat]};font-weight:700">${cat}</span> <b>${cnt}名</b></span>`;
@@ -1061,7 +1130,7 @@ function renderPlayerList() {
 
   const groups={};
   data.players.forEach(p=>{if(!groups[p.category])groups[p.category]=[];groups[p.category].push(p);});
-  el.innerHTML=['U15','U14','U13','U12','U10'].filter(c=>groups[c]).map(cat=>{
+  el.innerHTML=['U15','U14','U13','U12','U11','U10','U9','U8'].filter(c=>groups[c]).map(cat=>{
     const col=CAT_COLOR[cat];
     return `<div style="margin-bottom:16px">
       <div class="grade-header" style="color:${col}">${cat}（${GRADE_MAP[cat]||''}）— ${groups[cat].length}名</div>
