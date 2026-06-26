@@ -40,16 +40,11 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
 .nav-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* Dashboard */
-.dashboard { padding: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-@media(max-width:600px){ .dashboard { grid-template-columns: repeat(2, 1fr); } }
+.dashboard { padding: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media(max-width:600px){ .dashboard { grid-template-columns: repeat(3, 1fr); } }
 .dash-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; }
 .dash-num { font-size: 28px; font-weight: 700; color: var(--accent); line-height: 1; }
 .dash-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-
-/* Alerts */
-.alerts { padding: 0 16px 12px; display: flex; flex-direction: column; gap: 6px; }
-.alert { background: rgba(224,82,82,0.12); border: 1px solid rgba(224,82,82,0.3); border-radius: var(--radius); padding: 8px 12px; font-size: 12px; color: var(--red); display: flex; align-items: center; gap: 8px; }
-.alert-icon { font-size: 14px; flex-shrink: 0; }
 
 /* Calendar */
 .calendar-wrap { padding: 0 16px 16px; }
@@ -84,17 +79,18 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
 .cal-wd:last-child { color: #6ab4ff; }
 
 .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); }
-.cal-day { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); min-height: 80px; padding: 4px; position: relative; }
+.cal-day { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); height: 86px; padding: 3px; position: relative; overflow: hidden; }
 .cal-day:nth-child(7n) { border-right: none; }
-@media(max-width:600px){ .cal-day { min-height: 60px; } }
+@media(max-width:600px){ .cal-day { height: 68px; padding: 2px; } }
 .cal-day.other-month .day-num { color: var(--border); }
 .cal-day.today { background: rgba(74,124,220,0.08); }
 .cal-day.today .day-num { color: var(--accent); font-weight: 700; }
-.day-num { font-size: 12px; color: var(--text-muted); margin-bottom: 3px; }
+.day-num { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; line-height: 1; display: flex; align-items: center; gap: 2px; }
 .cal-day:nth-child(7n+1) .day-num { color: var(--red); }
 .cal-day:nth-child(7n) .day-num { color: #6ab4ff; }
 
-.event-chip { font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 4px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.event-chip { font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 3px; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; line-height: 1.5; }
+@media(max-width:600px){ .event-chip { font-size: 8px; padding: 1px 3px; } }
 .event-chip[data-cat="U15"] { background: rgba(224,82,82,0.2); color: var(--U15); border-left: 3px solid var(--U15); }
 .event-chip[data-cat="U14"] { background: rgba(155,89,220,0.2); color: var(--U14); border-left: 3px solid var(--U14); }
 .event-chip[data-cat="U13"] { background: rgba(74,124,220,0.2); color: var(--U13); border-left: 3px solid var(--U13); }
@@ -105,7 +101,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
 .event-chip[data-cat="U8"] { background: rgba(201,122,214,0.2); color: var(--U8); border-left: 3px solid var(--U8); }
 .more-chip { font-size: 10px; color: var(--text-muted); padding: 1px 4px; cursor: pointer; }
 .more-chip:hover { color: var(--accent); }
-.abs-badge-view { display: inline-flex; align-items: center; gap: 2px; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 8px; background: rgba(224,188,58,0.18); color: var(--yellow); margin-bottom: 2px; }
+.abs-badge-view { display: inline-flex; align-items: center; font-size: 8px; font-weight: 700; padding: 0 4px; border-radius: 6px; background: rgba(224,188,58,0.18); color: var(--yellow); margin-left: 4px; vertical-align: middle; }
 .event-chip.personal-event-view { background: rgba(122,127,154,0.18); color: var(--text-muted); border-left: 3px solid var(--text-muted); }
 
 /* Modal */
@@ -149,17 +145,111 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
-/* List view */
-.activity-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
-.act-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
-.act-card:hover { border-color: var(--accent); }
-.act-date-box { text-align: center; min-width: 44px; }
-.act-date-day { font-size: 22px; font-weight: 700; color: var(--text); line-height: 1; }
-.act-date-wd { font-size: 10px; color: var(--text-muted); }
-.act-body { flex: 1; }
-.act-cat { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
-.act-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-.act-meta { font-size: 11px; color: var(--text-muted); display: flex; gap: 10px; flex-wrap: wrap; }
+/* Day-row List view (NEW) */
+.daylist-wrap { padding: 12px 16px 24px; }
+.daylist-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.daylist-nav-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: var(--radius); font-size: 12px; cursor: pointer; }
+.daylist-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.daylist-today-label { font-size: 13px; font-weight: 700; color: var(--text-muted); }
+.daylist-legend { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.daylist-legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-muted); }
+.daylist-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+.day-row-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; display: flex; overflow: hidden; }
+.day-row-card.is-today { border-color: var(--accent); }
+.day-row-date { width: 64px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 4px; background: var(--surface2); border-right: 1px solid var(--border); gap: 2px; }
+.day-row-date .drd-day { font-size: 22px; font-weight: 700; line-height: 1; }
+.day-row-date .drd-wd { font-size: 10px; color: var(--text-muted); }
+.day-row-date .drd-today-tag { font-size: 8px; background: var(--accent); color: #fff; padding: 1px 5px; border-radius: 8px; margin-top: 2px; }
+.day-row-card.is-today .day-row-date { background: rgba(74,124,220,0.15); }
+.day-row-date.is-sun .drd-day { color: var(--red); }
+.day-row-date.is-sat .drd-day { color: #6ab4ff; }
+
+.day-row-cats { flex: 1; display: flex; gap: 6px; overflow-x: auto; padding: 8px; scrollbar-width: thin; }
+.day-row-cats::-webkit-scrollbar { height: 4px; }
+.day-row-cats::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.cat-minicard { flex: 0 0 84px; min-width: 84px; border-radius: 6px; padding: 6px 7px; cursor: pointer; border: 1.5px solid; display: flex; flex-direction: column; gap: 2px; transition: opacity .12s; }
+.cat-minicard:hover { opacity: 0.85; }
+.cat-minicard .cmc-label { font-size: 11px; font-weight: 700; }
+.cat-minicard .cmc-type { font-size: 10px; font-weight: 700; }
+.cat-minicard .cmc-time { font-size: 9px; opacity: 0.85; }
+.cat-minicard .cmc-venue { font-size: 8px; opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cat-minicard.is-empty { border-style: dashed; opacity: 0.5; justify-content: center; align-items: center; }
+.cat-minicard.is-empty .cmc-label { font-size: 10px; }
+.cat-minicard.is-off { opacity: 0.55; }
+
+@media(max-width:480px){
+  .day-row-date { width: 52px; }
+  .day-row-date .drd-day { font-size: 18px; }
+  .cat-minicard { flex: 0 0 72px; min-width: 72px; padding: 5px 6px; }
+}
+
+/* ===== TRM Match Management ===== */
+.trm-wrap { padding: 12px 16px 24px; }
+.trm-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+.trm-filter-group { display: flex; flex-direction: column; gap: 3px; }
+.trm-filter-group label { font-size: 10px; color: var(--text-muted); font-weight: 700; }
+.trm-filter-group select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 6px 9px; border-radius: var(--radius); font-size: 12px; }
+.trm-checkbox-group { display: flex; gap: 12px; align-items: center; margin-left: auto; flex-wrap: wrap; }
+.trm-checkbox { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-muted); cursor: pointer; }
+.trm-checkbox input { accent-color: var(--accent); }
+
+.trm-status-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+.trm-status-confirmed { background: rgba(58,176,122,0.2); color: var(--green); }
+.trm-status-negotiating { background: rgba(224,140,58,0.2); color: #e08c3a; }
+.trm-status-waiting { background: rgba(74,124,220,0.2); color: var(--accent); }
+.trm-status-searching { background: rgba(155,89,220,0.2); color: #9b59dc; }
+.trm-status-absent { background: rgba(122,127,154,0.2); color: var(--text-muted); }
+.trm-status-cancelled { background: rgba(224,82,82,0.2); color: var(--red); }
+.trm-status-needmore { background: rgba(224,188,58,0.2); color: var(--yellow); }
+
+.trm-cat-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 5px; display: inline-block; }
+
+/* Desktop table */
+.trm-table-wrap { display: block; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; }
+.trm-table { width: 100%; border-collapse: collapse; min-width: 760px; }
+.trm-table th { background: var(--surface2); padding: 8px 10px; font-size: 11px; text-align: left; color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+.trm-table td { padding: 8px 10px; font-size: 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.trm-table tr:last-child td { border-bottom: none; }
+.trm-table tr:hover td { background: rgba(74,124,220,0.05); }
+.trm-team-list { display: flex; flex-direction: column; gap: 3px; }
+.trm-team-row { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+.trm-btn-edit { background: var(--accent); color: #fff; border: none; padding: 5px 12px; border-radius: var(--radius); font-size: 11px; font-weight: 700; cursor: pointer; }
+.trm-btn-edit:hover { opacity: 0.85; }
+
+/* Mobile cards */
+.trm-card-list { display: none; flex-direction: column; gap: 10px; }
+.trm-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
+.trm-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.trm-card-date { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+.trm-card-name { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.trm-card-opponent { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+.trm-card-teams { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+.trm-card-team-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+.trm-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.trm-confirm-count { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+
+@media(max-width:760px){
+  .trm-table-wrap { display: none; }
+  .trm-card-list { display: flex; }
+  .trm-checkbox-group { margin-left: 0; }
+}
+
+/* TRM Edit Modal */
+.trm-edit-section { margin-bottom: 14px; }
+.trm-edit-label { font-size: 11px; color: var(--text-muted); font-weight: 700; margin-bottom: 5px; display: block; }
+.trm-edit-input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: var(--radius); font-size: 13px; width: 100%; }
+.trm-team-edit-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.trm-team-edit-row input { flex: 1; }
+.trm-team-edit-row select { width: 110px; }
+.trm-team-remove-btn { background: rgba(224,82,82,0.15); color: var(--red); border: 1px solid rgba(224,82,82,0.3); border-radius: var(--radius); width: 30px; height: 30px; font-size: 14px; cursor: pointer; flex-shrink: 0; }
+.trm-add-team-btn { background: var(--surface2); border: 1px dashed var(--border); color: var(--text-muted); padding: 8px; border-radius: var(--radius); font-size: 12px; cursor: pointer; width: 100%; margin-top: 4px; }
+.trm-add-team-btn:hover { border-color: var(--accent); color: var(--accent); }
+.trm-modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+.trm-save-btn { flex: 1; background: var(--accent); color: #fff; border: none; padding: 11px; border-radius: var(--radius); font-size: 14px; font-weight: 700; cursor: pointer; }
+.trm-cancel-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 11px 18px; border-radius: var(--radius); font-size: 14px; cursor: pointer; }
+
 </style>
 </head>
 <body>
@@ -176,6 +266,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
   <button class="tab-btn active" onclick="switchTab('calendar')">📅 カレンダー</button>
   <button class="tab-btn" onclick="switchTab('list')">📋 一覧</button>
   <button class="tab-btn" onclick="switchTab('load')">📊 負荷管理</button>
+  <button class="tab-btn" onclick="switchTab('trm')">🤝 TRM管理</button>
 </div>
 
 <!-- Dashboard -->
@@ -192,14 +283,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
     <div class="dash-num" id="d-today">–</div>
     <div class="dash-label">本日の活動</div>
   </div>
-  <div class="dash-card">
-    <div class="dash-num" id="d-alerts">–</div>
-    <div class="dash-label">アラート</div>
-  </div>
 </div>
-
-<!-- Alerts -->
-<div class="alerts" id="alerts-area"></div>
 
 <!-- Calendar Tab -->
 <div class="tab-content active" id="tab-calendar">
@@ -232,7 +316,15 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
 
 <!-- List Tab -->
 <div class="tab-content" id="tab-list">
-  <div class="activity-list" id="act-list"></div>
+  <div class="daylist-wrap">
+    <div class="daylist-nav">
+      <button class="daylist-nav-btn" onclick="changeListRange(-14)">‹ 前へ</button>
+      <span class="daylist-today-label" id="daylist-range-label"></span>
+      <button class="daylist-nav-btn" onclick="changeListRange(14)">次へ ›</button>
+    </div>
+    <div class="daylist-legend" id="daylist-legend"></div>
+    <div id="act-list"></div>
+  </div>
 </div>
 
 <!-- Load Tab -->
@@ -243,6 +335,74 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
       <thead><tr><th>選手名</th><th>カテゴリ</th><th>活動日数</th><th>連続日数</th><th>負荷</th></tr></thead>
       <tbody id="load-tbody"></tbody>
     </table>
+  </div>
+</div>
+
+<!-- TRM Match Management Tab -->
+<div class="tab-content" id="tab-trm">
+  <div class="trm-wrap">
+    <div class="trm-filters">
+      <div class="trm-filter-group">
+        <label>期間</label>
+        <select id="trm-f-period" onchange="renderTrmList()">
+          <option value="3m">今後3ヶ月</option>
+          <option value="1m">今後1ヶ月</option>
+          <option value="all">全期間</option>
+          <option value="past">過去のみ</option>
+        </select>
+      </div>
+      <div class="trm-filter-group">
+        <label>カテゴリー</label>
+        <select id="trm-f-cat" onchange="renderTrmList()">
+          <option value="">すべて</option>
+          <option value="U15">U15</option><option value="U14">U14</option>
+          <option value="U13">U13</option><option value="U12">U12</option>
+          <option value="U11">U11</option><option value="U10">U10</option>
+          <option value="U9">U9</option><option value="U8">U8</option>
+        </select>
+      </div>
+      <div class="trm-filter-group">
+        <label>状態</label>
+        <select id="trm-f-status" onchange="renderTrmList()">
+          <option value="">すべて</option>
+          <option value="confirmed">確定</option>
+          <option value="needmore">あと◯チーム探す</option>
+        </select>
+      </div>
+      <div class="trm-checkbox-group">
+        <label class="trm-checkbox"><input type="checkbox" id="trm-f-unconfirmed" onchange="renderTrmList()">未確定のみ表示</label>
+        <label class="trm-checkbox"><input type="checkbox" id="trm-f-excludecancel" checked onchange="renderTrmList()">キャンセル除外</label>
+      </div>
+    </div>
+
+    <!-- Desktop table -->
+    <div class="trm-table-wrap">
+      <table class="trm-table">
+        <thead>
+          <tr>
+            <th>日付</th><th>カテゴリー</th><th>時間・会場</th><th>予定名（主対戦相手）</th>
+            <th>参加状況・追加参加チーム</th><th>全体状態</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="trm-table-body"></tbody>
+      </table>
+    </div>
+
+    <!-- Mobile cards -->
+    <div class="trm-card-list" id="trm-card-list"></div>
+
+    <div id="trm-empty-msg" style="display:none;padding:24px;text-align:center;color:var(--text-muted)">該当するTRM/TM予定がありません</div>
+  </div>
+</div>
+
+<!-- TRM Edit Modal -->
+<div class="modal-overlay" id="trm-edit-modal" onclick="if(event.target===this)closeTrmEditModal()">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">TRM予定の編集</div>
+      <button class="modal-close" onclick="closeTrmEditModal()">✕</button>
+    </div>
+    <div id="trm-edit-body"></div>
   </div>
 </div>
 
@@ -274,6 +434,21 @@ const BIN = {
     } catch(e) {
       return null;
     }
+  },
+  async put(updatedFields) {
+    try {
+      const current = await this.get();
+      const merged = { ...(current||{}), ...updatedFields };
+      const r = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Access-Key': ACCESS_KEY },
+        body: JSON.stringify(merged)
+      });
+      if (!r.ok) throw new Error('put failed');
+      return true;
+    } catch(e) {
+      return false;
+    }
   }
 };
 
@@ -281,8 +456,9 @@ const BIN = {
 const TODAY = new Date();
 let curYear = TODAY.getFullYear();
 let curMonth = TODAY.getMonth();
-let data = { activities: [], players: [], staff: [], vehicles: [], venues: [], absences: [], personalEvents: [] };
+let data = { activities: [], players: [], staff: [], vehicles: [], venues: [], absences: [], personalEvents: [], trmMeta: {} };
 let activeFilters = new Set(['U15','U14','U13','U12','U11','U10','U9','U8']);
+let listRangeStart = fmtDate(TODAY);
 
 const CATS = ['U15','U14','U13','U12','U11','U10','U9','U8'];
 const CAT_COLOR = { U15:'#e05252', U14:'#9b59dc', U13:'#4a7cdc', U12:'#3ab07a', U11:'#2ba8a8', U10:'#e0bc3a', U9:'#e08c3a', U8:'#c97ad6' };
@@ -301,7 +477,7 @@ function getActCats(activity) {
 async function loadData() {
   const remote = await BIN.get();
   if (remote) {
-    data = { activities:[], players:[], staff:[], vehicles:[], venues:[], absences:[], personalEvents:[], ...remote };
+    data = { activities:[], players:[], staff:[], vehicles:[], venues:[], absences:[], personalEvents:[], trmMeta:{}, ...remote };
   } else {
     // Demo data
     data = getDemoData();
@@ -311,80 +487,19 @@ async function loadData() {
 
 function renderAll() {
   renderDashboard();
-  renderAlerts();
   renderCalendar();
   renderList();
   renderLoad();
+  renderTrmList();
 }
 
 // ===== Dashboard =====
 function renderDashboard() {
   const todayStr = fmtDate(TODAY);
   const todayActs = data.activities.filter(a => a.date === todayStr);
-  const alerts = getAlerts();
   document.getElementById('d-players').textContent = (data.players||[]).length;
   document.getElementById('d-staff').textContent = (data.staff||[]).length;
   document.getElementById('d-today').textContent = todayActs.length;
-  document.getElementById('d-alerts').textContent = alerts.length;
-}
-
-// ===== Alerts =====
-function getAlerts() {
-  const alerts = [];
-  const acts = data.activities || [];
-
-  // Venue conflict
-  const byDateVenue = {};
-  acts.forEach(a => {
-    if (!a.venue || a.actType === 'OFF') return;
-    const key = a.date + '|' + a.venue;
-    if (!byDateVenue[key]) byDateVenue[key] = [];
-    byDateVenue[key].push(a);
-  });
-  Object.entries(byDateVenue).forEach(([k,arr]) => {
-    if (arr.length > 1) {
-      const [date,venue] = k.split('|');
-      // Check time overlap
-      const sorted = arr.sort((a,b) => a.startTime.localeCompare(b.startTime));
-      for (let i=0;i<sorted.length-1;i++) {
-        if (sorted[i].endTime > sorted[i+1].startTime) {
-          alerts.push({ type:'venue', msg:`会場重複: ${date} ${venue} (${getActCats(sorted[i]).join('/')} / ${getActCats(sorted[i+1]).join('/')})` });
-        }
-      }
-    }
-  });
-
-  // Vehicle conflict
-  const byDateVeh = {};
-  acts.forEach(a => {
-    (a.vehicles||[]).forEach(v => {
-      const key = a.date + '|' + v;
-      if (!byDateVeh[key]) byDateVeh[key] = [];
-      byDateVeh[key].push(a);
-    });
-  });
-  Object.entries(byDateVeh).forEach(([k,arr]) => {
-    if (arr.length > 1) {
-      const [date,veh] = k.split('|');
-      const sorted = arr.sort((a,b)=>a.startTime.localeCompare(b.startTime));
-      for (let i=0;i<sorted.length-1;i++) {
-        if (sorted[i].endTime > sorted[i+1].startTime) {
-          alerts.push({ type:'vehicle', msg:`車両重複: ${date} ${veh} (${getActCats(sorted[i]).join('/')} / ${getActCats(sorted[i+1]).join('/')})` });
-        }
-      }
-    }
-  });
-
-  return alerts;
-}
-
-function renderAlerts() {
-  const alerts = getAlerts();
-  const el = document.getElementById('alerts-area');
-  el.innerHTML = alerts.map(a => `
-    <div class="alert"><span class="alert-icon">⚠</span>${a.msg}</div>
-  `).join('');
-  document.getElementById('d-alerts').textContent = alerts.length;
 }
 
 // ===== Calendar =====
@@ -421,27 +536,30 @@ function renderCalendar() {
     const dayAbsCount = absences.filter(ab => ds >= ab.startDate && ds <= ab.endDate).length;
     const dayPevents = pevents.filter(pe => pe.date === ds);
     const isToday = ds === fmtDate(TODAY);
-    const absBadge = dayAbsCount ? `<span class="abs-badge-view">🏖 ${dayAbsCount}名</span>` : '';
-    const chips = dayActs.slice(0,3).map(a => {
+    const absBadge = dayAbsCount ? `<span class="abs-badge-view">🏖${dayAbsCount}</span>` : '';
+    const totalItems = dayActs.length + dayPevents.length;
+    const maxChips = 2;
+    const chips = dayActs.slice(0,maxChips).map(a => {
       const cats = getActCats(a);
       const catLabel = cats.join('/');
       const primaryCat = cats[0]||'';
-      const nameLabel = a.name?`｜${a.name}`:'';
       return `
-      <div class="event-chip" data-cat="${primaryCat}" onclick="openEvent('${a.id}')" title="${catLabel} ${a.name||''}">
-        ${catLabel} ${a.actType||''}${nameLabel}
+      <div class="event-chip" data-cat="${primaryCat}" onclick="openEvent('${a.id}')" title="${catLabel} ${a.name||''} ${a.startTime}〜${a.endTime}">
+        ${catLabel} ${a.actType||''}
       </div>
     `;
     }).join('');
-    const peChips = dayPevents.slice(0,2).map(pe => `
+    const remainingSlots = Math.max(0, maxChips - dayActs.length);
+    const peChips = dayPevents.slice(0,remainingSlots).map(pe => `
       <div class="event-chip personal-event-view" onclick="openPersonalEvent('${pe.id}')" title="${pe.type} ${pe.title||''}">
-        📌 ${pe.type}${pe.title?'｜'+pe.title:''}
+        📌${pe.type}
       </div>
     `).join('');
-    const more = dayActs.length > 3 ? `<div class="more-chip">+${dayActs.length-3}件</div>` : '';
+    const shownCount = Math.min(dayActs.length,maxChips) + Math.min(dayPevents.length,remainingSlots);
+    const more = totalItems > shownCount ? `<div class="more-chip">+${totalItems-shownCount}件</div>` : '';
     return `<div class="cal-day${c.other?' other-month':''}${isToday?' today':''}">
-      <div class="day-num">${c.date.getDate()}</div>
-      ${absBadge}${chips}${peChips}${more}
+      <div class="day-num">${c.date.getDate()}${absBadge}</div>
+      ${chips}${peChips}${more}
     </div>`;
   }).join('');
 }
@@ -466,32 +584,81 @@ function toggleFilter(btn) {
   renderCalendar();
 }
 
-// ===== List =====
+// ===== List (Day-row x Category grid) =====
+function changeListRange(days) {
+  const d = new Date(listRangeStart);
+  d.setDate(d.getDate() + days);
+  listRangeStart = fmtDate(d);
+  renderList();
+}
+
+function renderListLegend() {
+  const el = document.getElementById('daylist-legend');
+  if (!el) return;
+  el.innerHTML = CATS.map(cat => `
+    <span class="daylist-legend-item">
+      <span class="daylist-legend-dot" style="background:${CAT_COLOR[cat]}"></span>${cat}
+    </span>
+  `).join('');
+}
+
 function renderList() {
-  const acts = [...(data.activities||[])].sort((a,b)=>a.date.localeCompare(b.date));
+  renderListLegend();
+  const acts = data.activities || [];
+  const numDays = 7;
+  const start = new Date(listRangeStart);
+  const end = new Date(start); end.setDate(end.getDate() + numDays - 1);
+  document.getElementById('daylist-range-label').textContent =
+    `${start.getMonth()+1}/${start.getDate()} 〜 ${end.getMonth()+1}/${end.getDate()}`;
+
   const el = document.getElementById('act-list');
-  if (!acts.length) { el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted)">活動なし</div>'; return; }
-  el.innerHTML = acts.map(a => {
-    const d = new Date(a.date);
-    const cats = getActCats(a);
-    const primaryCat = cats[0]||'';
-    const color = CAT_COLOR[primaryCat] || '#888';
-    return `<div class="act-card" onclick="openEvent('${a.id}')">
-      <div class="act-date-box">
-        <div class="act-date-day">${d.getDate()}</div>
-        <div class="act-date-wd">${['日','月','火','水','木','金','土'][d.getDay()]}</div>
-      </div>
-      <div class="act-body">
-        <span class="act-cat" style="background:${color}22;color:${color}">${cats.join('/')}</span>
-        <div class="act-name">${a.name||a.actType}</div>
-        <div class="act-meta">
-          <span>🕐 ${a.startTime}〜${a.endTime}</span>
-          ${a.venue?`<span>📍 ${a.venue}</span>`:''}
-          ${a.staff&&a.staff.length?`<span>👤 ${a.staff.join('/')} </span>`:''}
+  const rows = [];
+  for (let i=0;i<numDays;i++) {
+    const d = new Date(start); d.setDate(d.getDate()+i);
+    const ds = fmtDate(d);
+    const isToday = ds === fmtDate(TODAY);
+    const wd = d.getDay();
+    const dateClass = wd===0 ? 'is-sun' : (wd===6 ? 'is-sat' : '');
+
+    const dayActs = acts.filter(a => a.date === ds);
+
+    const catCards = CATS.map(cat => {
+      // この日・このカテゴリーに該当する活動を探す（複数カテゴリーの予定も拾う）
+      const match = dayActs.find(a => getActCats(a).includes(cat));
+      const color = CAT_COLOR[cat] || '#888';
+      if (!match) {
+        return `<div class="cat-minicard is-empty" style="border-color:${color}55;color:${color}" onclick="handleEmptyCatTap('${ds}','${cat}')">
+          <div class="cmc-label">${cat}</div>
+          <div class="cmc-type">予定なし</div>
+        </div>`;
+      }
+      const cats = getActCats(match);
+      const catLabel = cats.join('.');
+      const isOff = match.actType === 'OFF';
+      return `<div class="cat-minicard${isOff?' is-off':''}" style="border-color:${color};background:${color}1a;color:${color}" onclick="openEvent('${match.id}')">
+        <div class="cmc-label">${catLabel}</div>
+        <div class="cmc-type">${isOff?'OFF':(match.actType||'')}</div>
+        ${!isOff?`<div class="cmc-time">${match.startTime||''}</div>`:''}
+        ${!isOff && match.venue?`<div class="cmc-venue">📍${match.venue}</div>`:''}
+      </div>`;
+    }).join('');
+
+    rows.push(`
+      <div class="day-row-card${isToday?' is-today':''}">
+        <div class="day-row-date ${dateClass}">
+          <div class="drd-day">${d.getDate()}</div>
+          <div class="drd-wd">${WD[wd]}</div>
+          ${isToday?'<div class="drd-today-tag">今日</div>':''}
         </div>
+        <div class="day-row-cats">${catCards}</div>
       </div>
-    </div>`;
-  }).join('');
+    `);
+  }
+  el.innerHTML = rows.join('') || '<div style="padding:24px;text-align:center;color:var(--text-muted)">表示する日付がありません</div>';
+}
+
+function handleEmptyCatTap(ds, cat) {
+  alert(`${ds} の ${cat} には予定がありません。\n新規登録は管理画面から行ってください。`);
 }
 
 // ===== Load Management =====
@@ -612,6 +779,276 @@ function fmtDate(d) {
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
+// ============================================================
+// TRM Match Management
+// 既存の data.activities には一切書き込まない。
+// 編集データ（主対戦相手・必要チーム数・追加参加チーム・メモ）はすべて
+// data.trmMeta[activityId] という別オブジェクトに保存する。
+// ============================================================
+const TRM_STATUS_LABEL = { confirmed:'確定', negotiating:'打診中', waiting:'返信待ち', searching:'探し中', absent:'不参加', cancelled:'キャンセル' };
+const TRM_STATUS_CLASS = { confirmed:'trm-status-confirmed', negotiating:'trm-status-negotiating', waiting:'trm-status-waiting', searching:'trm-status-searching', absent:'trm-status-absent', cancelled:'trm-status-cancelled' };
+
+// TRM/TM/トレーニングマッチに該当する予定かどうか判定
+function isTrmActivity(a) {
+  if (a.actType === 'OFF') return false;
+  const hay = `${a.actType||''} ${a.name||''}`;
+  return /TRM|TM|トレーニングマッチ/i.test(hay);
+}
+
+// 予定名から主対戦相手を自動抽出（vs / VS / Vs / 対 / v / ＶＳ に対応）
+function extractOpponent(name) {
+  if (!name) return '';
+  const patterns = [
+    /(?:vs|VS|Vs|ＶＳ)\s*(.+)$/,
+    /\s対\s*(.+)$/,
+    /\sv\s+(.+)$/i
+  ];
+  for (const re of patterns) {
+    const m = name.match(re);
+    if (m && m[1]) return m[1].trim();
+  }
+  return '';
+}
+
+function getTrmMeta(activityId) {
+  const meta = (data.trmMeta && data.trmMeta[activityId]) || {};
+  return {
+    opponent: meta.opponent != null ? meta.opponent : null, // null = 未編集（自動抽出に従う）
+    requiredTeams: meta.requiredTeams != null ? meta.requiredTeams : 1,
+    teams: Array.isArray(meta.teams) ? meta.teams : [],
+    notes: meta.notes || ''
+  };
+}
+
+function getEffectiveOpponent(activity, meta) {
+  if (meta.opponent != null && meta.opponent !== '') return meta.opponent;
+  if (meta.opponent === '') return ''; // 明示的に空にされた場合
+  return extractOpponent(activity.name) || '未定';
+}
+
+// 主対戦相手＋追加参加チームを統合して状態集計
+function computeTrmSummary(activity, meta) {
+  const teams = [];
+  const opponent = getEffectiveOpponent(activity, meta);
+  // 主対戦相手は常に1チーム目（状態は確定扱い。ただし追加チームと同様に管理したい場合はteamsに含める設計も可）
+  teams.push({ name: opponent, status: 'confirmed', isOpponent: true });
+  meta.teams.forEach(t => teams.push({ ...t, isOpponent: false }));
+
+  const required = meta.requiredTeams || 1;
+  const confirmedCount = teams.filter(t => t.status === 'confirmed').length;
+  const hasCancelled = teams.some(t => t.status === 'cancelled');
+
+  let overall, overallClass;
+  if (hasCancelled && confirmedCount === 0) {
+    overall = 'キャンセル'; overallClass = 'trm-status-cancelled';
+  } else if (confirmedCount >= required) {
+    overall = '確定'; overallClass = 'trm-status-confirmed';
+  } else {
+    const remain = required - confirmedCount;
+    overall = `あと${remain}チーム探す`; overallClass = 'trm-status-needmore';
+  }
+
+  return { teams, required, confirmedCount, overall, overallClass, isFullyConfirmed: confirmedCount >= required && !hasCancelled };
+}
+
+function getTrmActivities() {
+  return (data.activities||[]).filter(isTrmActivity);
+}
+
+function passesTrmFilters(activity, summary) {
+  const period = document.getElementById('trm-f-period')?.value || '3m';
+  const catFilter = document.getElementById('trm-f-cat')?.value || '';
+  const statusFilter = document.getElementById('trm-f-status')?.value || '';
+  const unconfirmedOnly = document.getElementById('trm-f-unconfirmed')?.checked;
+  const excludeCancel = document.getElementById('trm-f-excludecancel')?.checked;
+
+  const todayStr = fmtDate(TODAY);
+  if (period === '1m') {
+    const limit = new Date(TODAY); limit.setMonth(limit.getMonth()+1);
+    if (activity.date < todayStr || activity.date > fmtDate(limit)) return false;
+  } else if (period === '3m') {
+    const limit = new Date(TODAY); limit.setMonth(limit.getMonth()+3);
+    if (activity.date < todayStr || activity.date > fmtDate(limit)) return false;
+  } else if (period === 'past') {
+    if (activity.date >= todayStr) return false;
+  }
+  if (catFilter && !getActCats(activity).includes(catFilter)) return false;
+  if (statusFilter === 'confirmed' && summary.overall !== '確定') return false;
+  if (statusFilter === 'needmore' && !summary.overall.startsWith('あと')) return false;
+  if (unconfirmedOnly && summary.isFullyConfirmed) return false;
+  if (excludeCancel && summary.overall === 'キャンセル') return false;
+  return true;
+}
+
+function renderTrmList() {
+  const tableBody = document.getElementById('trm-table-body');
+  const cardList = document.getElementById('trm-card-list');
+  const emptyMsg = document.getElementById('trm-empty-msg');
+  if (!tableBody) return; // タブ未初期化時の安全策
+
+  const trmActs = getTrmActivities()
+    .map(a => ({ activity:a, meta:getTrmMeta(a.id) }))
+    .map(x => ({ ...x, summary: computeTrmSummary(x.activity, x.meta) }))
+    .filter(x => passesTrmFilters(x.activity, x.summary))
+    .sort((a,b) => a.activity.date.localeCompare(b.activity.date));
+
+  if (!trmActs.length) {
+    tableBody.innerHTML = '';
+    cardList.innerHTML = '';
+    emptyMsg.style.display = 'block';
+    return;
+  }
+  emptyMsg.style.display = 'none';
+
+  // ----- Desktop table -----
+  tableBody.innerHTML = trmActs.map(({activity:a, meta, summary}) => {
+    const cats = getActCats(a);
+    const catLabel = cats.join('.');
+    const color = CAT_COLOR[cats[0]] || '#888';
+    const d = new Date(a.date);
+    const teamRows = summary.teams.map(t => `
+      <div class="trm-team-row">
+        <span>${t.isOpponent?'主対戦相手：':'○'} ${t.name||'未定'}</span>
+        <span class="trm-status-badge ${TRM_STATUS_CLASS[t.status]||''}">${TRM_STATUS_LABEL[t.status]||t.status}</span>
+      </div>`).join('');
+    return `<tr>
+      <td>${a.date.slice(5).replace('-','/')}<br><span style="color:var(--text-muted);font-size:10px">(${WD[d.getDay()]})</span></td>
+      <td><span class="trm-cat-badge" style="background:${color}22;color:${color}">${catLabel}</span></td>
+      <td>${a.startTime}〜${a.endTime}<br><span style="color:var(--text-muted);font-size:10px">${a.venue||''}</span></td>
+      <td>${a.name||a.actType}</td>
+      <td><div class="trm-team-list">${teamRows}<div style="font-size:10px;color:var(--text-muted);margin-top:2px">必要チーム数：${summary.required}</div></div></td>
+      <td><span class="trm-status-badge ${summary.overallClass}">${summary.overall}</span><br><span style="font-size:10px;color:var(--text-muted)">確定：${summary.confirmedCount}/${summary.required}</span></td>
+      <td><button class="trm-btn-edit" onclick="openTrmEditModal('${a.id}')">詳細・編集</button></td>
+    </tr>`;
+  }).join('');
+
+  // ----- Mobile cards -----
+  cardList.innerHTML = trmActs.map(({activity:a, meta, summary}) => {
+    const cats = getActCats(a);
+    const catLabel = cats.join('.');
+    const color = CAT_COLOR[cats[0]] || '#888';
+    const d = new Date(a.date);
+    const opponent = getEffectiveOpponent(a, meta);
+    const teamRows = summary.teams.filter(t=>!t.isOpponent).map(t => `
+      <div class="trm-card-team-row">
+        <span>・${t.name||'未定'}</span>
+        <span class="trm-status-badge ${TRM_STATUS_CLASS[t.status]||''}">${TRM_STATUS_LABEL[t.status]||t.status}</span>
+      </div>`).join('');
+    return `<div class="trm-card" onclick="openTrmEditModal('${a.id}')">
+      <div class="trm-card-head">
+        <span class="trm-card-date">${a.date.slice(5).replace('-','/')}（${WD[d.getDay()]}）</span>
+        <span class="trm-cat-badge" style="background:${color}22;color:${color}">${catLabel}</span>
+      </div>
+      <div class="trm-card-name">${a.name||a.actType}</div>
+      <div class="trm-card-opponent">主対戦相手：${opponent}</div>
+      ${teamRows?`<div class="trm-card-teams">${teamRows}</div>`:''}
+      <div class="trm-card-footer">
+        <span class="trm-status-badge ${summary.overallClass}">${summary.overall}</span>
+        <span class="trm-confirm-count">確定：${summary.confirmedCount}/${summary.required}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ----- Edit Modal -----
+let trmEditingId = null;
+let trmEditingTeams = [];
+
+function openTrmEditModal(activityId) {
+  const activity = (data.activities||[]).find(x=>x.id===activityId);
+  if (!activity) return;
+  trmEditingId = activityId;
+  const meta = getTrmMeta(activityId);
+  trmEditingTeams = JSON.parse(JSON.stringify(meta.teams));
+
+  const cats = getActCats(activity);
+  const opponent = meta.opponent != null ? meta.opponent : extractOpponent(activity.name);
+
+  document.getElementById('trm-edit-body').innerHTML = `
+    <div class="trm-edit-section">
+      <span class="trm-cat-badge" style="background:${CAT_COLOR[cats[0]]||'#888'}22;color:${CAT_COLOR[cats[0]]||'#888'}">${cats.join('.')}</span>
+      <div style="font-size:16px;font-weight:700;margin-top:8px">${activity.name||activity.actType}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">${activity.date} ${activity.startTime}〜${activity.endTime} ／ ${activity.venue||'会場未設定'}</div>
+    </div>
+    <div class="trm-edit-section">
+      <label class="trm-edit-label">主対戦相手</label>
+      <input type="text" class="trm-edit-input" id="trm-edit-opponent" value="${opponent}" placeholder="対戦相手名">
+    </div>
+    <div class="trm-edit-section">
+      <label class="trm-edit-label">必要チーム数</label>
+      <input type="number" class="trm-edit-input" id="trm-edit-required" min="1" value="${meta.requiredTeams}" style="width:100px">
+    </div>
+    <div class="trm-edit-section">
+      <label class="trm-edit-label">追加参加チーム</label>
+      <div id="trm-edit-teams"></div>
+      <button class="trm-add-team-btn" onclick="addTrmTeamRow()">＋ チームを追加</button>
+    </div>
+    <div class="trm-edit-section">
+      <label class="trm-edit-label">メモ</label>
+      <textarea class="trm-edit-input" id="trm-edit-notes" rows="3" placeholder="連絡事項など">${meta.notes}</textarea>
+    </div>
+    <div class="trm-modal-actions">
+      <button class="trm-save-btn" onclick="saveTrmEdit()">💾 保存</button>
+      <button class="trm-cancel-btn" onclick="closeTrmEditModal()">キャンセル</button>
+    </div>
+  `;
+  renderTrmTeamRows();
+  document.getElementById('trm-edit-modal').classList.add('open');
+}
+
+function renderTrmTeamRows() {
+  const el = document.getElementById('trm-edit-teams');
+  if (!el) return;
+  el.innerHTML = trmEditingTeams.map((t, i) => `
+    <div class="trm-team-edit-row">
+      <input type="text" class="trm-edit-input" value="${t.name||''}" placeholder="チーム名" onchange="trmEditingTeams[${i}].name=this.value">
+      <select class="trm-edit-input" onchange="trmEditingTeams[${i}].status=this.value">
+        ${Object.entries(TRM_STATUS_LABEL).map(([v,l])=>`<option value="${v}"${t.status===v?' selected':''}>${l}</option>`).join('')}
+      </select>
+      <button class="trm-team-remove-btn" onclick="removeTrmTeamRow(${i})">✕</button>
+    </div>
+  `).join('') || '<div style="font-size:12px;color:var(--text-muted);padding:4px 0">追加参加チームはまだありません</div>';
+}
+
+function addTrmTeamRow() {
+  trmEditingTeams.push({ name:'', status:'searching', memo:'' });
+  renderTrmTeamRows();
+}
+function removeTrmTeamRow(i) {
+  trmEditingTeams.splice(i,1);
+  renderTrmTeamRows();
+}
+
+async function saveTrmEdit() {
+  if (!trmEditingId) return;
+  const opponentVal = document.getElementById('trm-edit-opponent').value.trim();
+  const requiredVal = parseInt(document.getElementById('trm-edit-required').value) || 1;
+  const notesVal = document.getElementById('trm-edit-notes').value;
+
+  if (!data.trmMeta) data.trmMeta = {};
+  data.trmMeta[trmEditingId] = {
+    opponent: opponentVal,
+    requiredTeams: requiredVal,
+    teams: trmEditingTeams.filter(t => t.name && t.name.trim() !== ''),
+    notes: notesVal
+  };
+
+  closeTrmEditModal();
+  renderTrmList();
+
+  // 既存の activities, players, staff 等には一切触れず、trmMeta だけをJSONBinに反映
+  const ok = await BIN.put({ trmMeta: data.trmMeta });
+  if (!ok) {
+    alert('JSONBinへの保存に失敗しました。通信環境をご確認の上、もう一度お試しください。');
+  }
+}
+
+function closeTrmEditModal() {
+  document.getElementById('trm-edit-modal').classList.remove('open');
+  trmEditingId = null;
+  trmEditingTeams = [];
+}
+
 // ===== Demo Data =====
 function getDemoData() {
   const y = TODAY.getFullYear();
@@ -636,6 +1073,10 @@ function getDemoData() {
       {id:'pe1',date:`${y}-${m}-15`,targetType:'player',targets:['鈴木 大輝'],type:'トレセン',title:'山梨県トレセン',notes:''},
       {id:'pe2',date:`${y}-${m}-18`,targetType:'staff',targets:['監督 山本'],type:'スタッフ用事',title:'指導者研修会',notes:''}
     ],
+    trmMeta: {
+      'a3': { opponent:'甲府FC', requiredTeams:3, teams:[{name:'ラーゴ河口湖',status:'negotiating',memo:''},{name:'',status:'searching',memo:''}], notes:'' },
+      'a7': { opponent:'諏訪SC', requiredTeams:2, teams:[{name:'八ヶ岳FC',status:'confirmed',memo:''}], notes:'' }
+    },
     activities: [
       {id:'a1',date:`${y}-${m}-03`,category:'U15',actType:'TR',name:'U15 TR',startTime:'16:00',endTime:'18:00',venue:'白州総合グラウンド',staff:['監督 山本','コーチ 川田'],vehicles:['ハイエース①'],playerCount:18,notes:''},
       {id:'a2',date:`${y}-${m}-03`,category:'U13',actType:'TR',name:'U13 TR',startTime:'16:00',endTime:'18:00',venue:'長坂総合スポーツ公園',staff:['コーチ 林'],vehicles:['ハイエース②'],playerCount:14,notes:''},
@@ -649,6 +1090,7 @@ function getDemoData() {
       {id:'a10',date:`${y}-${m}-21`,category:'U15',actType:'TOUR',name:'U15 遠征2日目',startTime:'08:00',endTime:'19:00',venue:'静岡FC',staff:['監督 山本','コーチ 川田'],vehicles:['マイクロバス'],playerCount:20,notes:''},
       {id:'a11',date:`${y}-${m}-24`,category:'U14',actType:'GAME',name:'U14 公式戦',startTime:'10:00',endTime:'13:00',venue:'長坂総合スポーツ公園',staff:['コーチ 川田'],vehicles:['ハイエース①','ハイエース②'],playerCount:16,notes:'山梨県U14リーグ'},
       {id:'a12',date:`${y}-${m}-24`,category:'U12',actType:'TRM',name:'U12 TRM',startTime:'10:00',endTime:'12:00',venue:'長坂総合スポーツ公園',staff:['コーチ 林'],vehicles:['軽トラック'],playerCount:12,notes:''},
+      {id:'a13',date:`${y}-${m}-26`,categories:['U15','U14'],actType:'TRM',name:'U15.U14 TRM vs おおぞら',startTime:'10:00',endTime:'12:30',venue:'白州総合グラウンド',staff:['監督 山本'],vehicles:[],playerCount:30,notes:''},
     ]
   };
 }
