@@ -168,12 +168,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
 .day-row-cats { flex: 1; display: flex; gap: 6px; overflow-x: auto; padding: 8px; scrollbar-width: thin; }
 .day-row-cats::-webkit-scrollbar { height: 4px; }
 .day-row-cats::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-.day-row-cats.is-filtered { flex-wrap: wrap; }
+.day-row-cats.is-filtered { flex-wrap: nowrap; }
 
-.cat-minicard { flex: 0 0 84px; min-width: 84px; border-radius: 6px; padding: 6px 7px; cursor: pointer; border: 1.5px solid; display: flex; flex-direction: column; gap: 2px; transition: opacity .12s, flex-basis .15s; }
+.cat-minicard { flex: 0 0 84px; min-width: 84px; border-radius: 6px; padding: 6px 7px; cursor: pointer; border: 1.5px solid; display: flex; flex-direction: column; gap: 2px; transition: opacity .12s; box-sizing: border-box; }
 .cat-minicard:hover { opacity: 0.85; }
 .cat-minicard .cmc-label { font-size: 11px; font-weight: 700; }
 .cat-minicard .cmc-type { font-size: 10px; font-weight: 700; }
+.cat-minicard .cmc-name { font-size: 9px; opacity: 0.95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cat-minicard .cmc-time { font-size: 9px; opacity: 0.85; }
 .cat-minicard .cmc-venue { font-size: 8px; opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cat-minicard .cmc-opponent { font-size: 9px; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
@@ -181,10 +182,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
 .cat-minicard.is-empty .cmc-label { font-size: 10px; }
 .cat-minicard.is-off { opacity: 0.55; }
 
-/* 横幅を広く使う表示（カテゴリーが絞られている時） */
-.cat-minicard.is-wide { flex: 1 1 160px; min-width: 140px; padding: 8px 10px; }
+/* 横幅を広く使う表示（カテゴリーが絞られている時。実際の幅はJSでインライン指定） */
 .cat-minicard.is-wide .cmc-label { font-size: 13px; }
 .cat-minicard.is-wide .cmc-type { font-size: 12px; }
+.cat-minicard.is-wide .cmc-name { font-size: 11px; white-space: normal; }
 .cat-minicard.is-wide .cmc-time { font-size: 11px; }
 .cat-minicard.is-wide .cmc-venue, .cat-minicard.is-wide .cmc-opponent { font-size: 10px; white-space: normal; }
 
@@ -197,7 +198,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
   .day-row-date { width: 52px; }
   .day-row-date .drd-day { font-size: 18px; }
   .cat-minicard { flex: 0 0 72px; min-width: 72px; padding: 5px 6px; }
-  .cat-minicard.is-wide { flex: 1 1 130px; min-width: 110px; }
 }
 
 /* ===== TRM Match Management ===== */
@@ -678,9 +678,12 @@ function renderList() {
   document.getElementById('daylist-range-label').textContent =
     `${start.getMonth()+1}/${start.getDate()} 〜 ${end.getMonth()+1}/${end.getDate()}`;
 
-  // 選択中のカテゴリーのみ表示。選択数が少ないほど横幅を広く使う（カードを大きくする）
+  // 選択中のカテゴリーのみ表示。
+  // 全8カテゴリー選択時はこれまで通り固定幅で横スクロール、
+  // それより少ない数を選んだ場合は、選択数に応じて均等に幅を分けて余白なく埋める。
   const visibleCats = CATS.filter(c => listCatFilters.has(c));
-  const isWide = visibleCats.length > 0 && visibleCats.length <= 4;
+  const isFiltered = visibleCats.length > 0 && visibleCats.length < CATS.length;
+  const wideBasis = visibleCats.length > 0 ? `calc((100% - ${(visibleCats.length-1)*6}px) / ${visibleCats.length})` : '';
 
   const el = document.getElementById('act-list');
   const rows = [];
@@ -697,9 +700,10 @@ function renderList() {
       // この日・このカテゴリーに該当する活動を探す（複数カテゴリーの予定も拾う）
       const match = dayActs.find(a => getActCats(a).includes(cat));
       const color = CAT_COLOR[cat] || '#888';
-      const wideClass = isWide ? ' is-wide' : '';
+      const wideClass = isFiltered ? ' is-wide' : '';
+      const widthStyle = isFiltered ? `flex:1 1 ${wideBasis};min-width:0;` : '';
       if (!match) {
-        return `<div class="cat-minicard is-empty${wideClass}" style="border-color:${color}55;color:${color}" onclick="handleEmptyCatTap('${ds}','${cat}')">
+        return `<div class="cat-minicard is-empty${wideClass}" style="${widthStyle}border-color:${color}55;color:${color}" onclick="handleEmptyCatTap('${ds}','${cat}')">
           <div class="cmc-label">${cat}</div>
           <div class="cmc-type">予定なし</div>
         </div>`;
@@ -708,9 +712,10 @@ function renderList() {
       const isJoint = matchCats.length > 1;
       const isOff = match.actType === 'OFF';
       const opponent = !isOff ? extractOpponent(match.name) : '';
-      return `<div class="cat-minicard${isOff?' is-off':''}${wideClass}" style="border-color:${color};background:${color}1a;color:${color}" onclick="openEvent('${match.id}')" title="${isJoint?'合同：'+matchCats.join('/'):cat}">
+      return `<div class="cat-minicard${isOff?' is-off':''}${wideClass}" style="${widthStyle}border-color:${color};background:${color}1a;color:${color}" onclick="openEvent('${match.id}')" title="${isJoint?'合同：'+matchCats.join('/'):cat}">
         <div class="cmc-label">${cat}${isJoint?' 🔗':''}</div>
         <div class="cmc-type">${isOff?'OFF':(match.actType||'')}</div>
+        ${match.name?`<div class="cmc-name">${match.name}</div>`:''}
         ${!isOff?`<div class="cmc-time">${match.startTime||''}</div>`:''}
         ${opponent?`<div class="cmc-opponent">⚔️ ${opponent}</div>`:''}
         ${!isOff && match.venue?`<div class="cmc-venue">📍${match.venue}</div>`:''}
@@ -724,7 +729,7 @@ function renderList() {
           <div class="drd-wd">${WD[wd]}</div>
           ${isToday?'<div class="drd-today-tag">今日</div>':''}
         </div>
-        <div class="day-row-cats${isWide?' is-filtered':''}">${catCards || '<span style="font-size:11px;color:var(--text-muted);padding:8px">カテゴリーを選択してください</span>'}</div>
+        <div class="day-row-cats${isFiltered?' is-filtered':''}">${catCards || '<span style="font-size:11px;color:var(--text-muted);padding:8px">カテゴリーを選択してください</span>'}</div>
       </div>
     `);
   }
