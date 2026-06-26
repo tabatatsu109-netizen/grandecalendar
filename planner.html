@@ -459,11 +459,20 @@ let curMonth = TODAY.getMonth();
 let data = { activities: [], players: [], staff: [], vehicles: [], venues: [], absences: [], personalEvents: [], trmMeta: {} };
 let activeFilters = new Set(['U15','U14','U13','U12','U11','U10','U9','U8']);
 let listRangeStart = fmtDate(TODAY);
+let listRangeAdjusted = false; // 初回だけ「直近の予定がある週」へ自動ジャンプするためのフラグ
 
 const CATS = ['U15','U14','U13','U12','U11','U10','U9','U8'];
 const CAT_COLOR = { U15:'#e05252', U14:'#9b59dc', U13:'#4a7cdc', U12:'#3ab07a', U11:'#2ba8a8', U10:'#e0bc3a', U9:'#e08c3a', U8:'#c97ad6' };
 const WD = ['日','月','火','水','木','金','土'];
 const TYPES = { TR:'TR', TRM:'TRM', GAME:'公式戦', TOUR:'遠征', OFF:'OFF', PRACTICE:'練習試合', OTHER:'その他' };
+
+// "YYYY-MM-DD" 文字列をローカルタイムゾーンで安全にDateへ変換する
+// （new Date("YYYY-MM-DD") はUTC0時として解釈されるため、JST環境では前日にズレることがある）
+function parseLocalDate(dateStr) {
+  if (!dateStr) return new Date(NaN);
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
 
 // 複数カテゴリー対応: 既存データ(category:"U13")も新形式(categories:["U13","U12"])も同じ配列として扱う
 function getActCats(activity) {
@@ -556,7 +565,7 @@ function renderCalendar() {
       </div>
     `).join('');
     const shownCount = Math.min(dayActs.length,maxChips) + Math.min(dayPevents.length,remainingSlots);
-    const more = totalItems > shownCount ? `<div class="more-chip">+${totalItems-shownCount}件</div>` : '';
+    const more = totalItems > shownCount ? `<div class="more-chip" onclick="openDayDetail('${ds}')">+${totalItems-shownCount}件</div>` : '';
     return `<div class="cal-day${c.other?' other-month':''}${isToday?' today':''}">
       <div class="day-num">${c.date.getDate()}${absBadge}</div>
       ${chips}${peChips}${more}
@@ -586,7 +595,7 @@ function toggleFilter(btn) {
 
 // ===== List (Day-row x Category grid) =====
 function changeListRange(days) {
-  const d = new Date(listRangeStart);
+  const d = parseLocalDate(listRangeStart);
   d.setDate(d.getDate() + days);
   listRangeStart = fmtDate(d);
   renderList();
@@ -603,10 +612,25 @@ function renderListLegend() {
 }
 
 function renderList() {
+  // 一覧タブを開いた直後（today起点のまま動いていない場合）は、
+  // 直近で実際に予定がある週まで自動的にジャンプする
+  if (!listRangeAdjusted) {
+    listRangeAdjusted = true;
+    const todayStr = fmtDate(TODAY);
+    const upcoming = (data.activities||[])
+      .map(a=>a.date)
+      .filter(d => d >= todayStr)
+      .sort();
+    if (upcoming.length && upcoming[0] !== listRangeStart) {
+      // 直近の予定がある日付が含まれる週の開始日（同じ起点ルールでよい：その日からの7日間表示に揃える）
+      listRangeStart = upcoming[0];
+    }
+  }
+
   renderListLegend();
   const acts = data.activities || [];
   const numDays = 7;
-  const start = new Date(listRangeStart);
+  const start = parseLocalDate(listRangeStart);
   const end = new Date(start); end.setDate(end.getDate() + numDays - 1);
   document.getElementById('daylist-range-label').textContent =
     `${start.getMonth()+1}/${start.getDate()} 〜 ${end.getMonth()+1}/${end.getDate()}`;
@@ -670,7 +694,7 @@ function renderLoad() {
 
   const rows = players.map(p => {
     const myActs = acts.filter(a => {
-      const d = new Date(a.date);
+      const d = parseLocalDate(a.date);
       if (d.getFullYear() !== curYear || d.getMonth() !== curMonth) return false;
       if (a.actType === 'OFF') return false;
       if ((a.players||[]).includes(p.name) || getActCats(a).includes(p.category)) return true;
@@ -685,8 +709,8 @@ function renderLoad() {
     const dates = [...new Set(activeDays.map(a=>a.date))].sort();
     let maxConsec = 0, consec = 1;
     for (let i=1;i<dates.length;i++) {
-      const prev = new Date(dates[i-1]);
-      const cur = new Date(dates[i]);
+      const prev = parseLocalDate(dates[i-1]);
+      const cur = parseLocalDate(dates[i]);
       const diff = (cur - prev) / 86400000;
       if (diff === 1) { consec++; maxConsec = Math.max(maxConsec, consec); }
       else consec = 1;
@@ -719,6 +743,38 @@ function renderLoad() {
 }
 
 // ===== Modal =====
+function openDayDetail(ds) {
+  const dayActs = (data.activities||[]).filter(a => a.date === ds && getActCats(a).some(cat=>activeFilters.has(cat)));
+  const dayPevents = (data.personalEvents||[]).filter(pe => pe.date === ds);
+  const d = parseLocalDate(ds);
+
+  const actRows = dayActs.map(a => {
+    const cats = getActCats(a);
+    const catLabel = cats.join('/');
+    const color = CAT_COLOR[cats[0]] || '#888';
+    return `<div class="ev-row" style="cursor:pointer" onclick="openEvent('${a.id}')">
+      <span class="ev-row-label" style="color:${color};font-weight:700">${catLabel}</span>
+      <span class="ev-row-val">${a.actType||''} ${a.name?'｜'+a.name:''} ${a.startTime?`(${a.startTime}〜${a.endTime})`:''}</span>
+    </div>`;
+  }).join('');
+
+  const peRows = dayPevents.map(pe => `
+    <div class="ev-row" style="cursor:pointer" onclick="openPersonalEvent('${pe.id}')">
+      <span class="ev-row-label" style="color:var(--text-muted)">📌${pe.type}</span>
+      <span class="ev-row-val">${pe.title||''}</span>
+    </div>`).join('');
+
+  document.getElementById('modal-body').innerHTML = `
+    <div class="event-detail">
+      <div class="ev-name">${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}）の予定</div>
+      <div class="ev-rows">
+        ${actRows}${peRows}
+        ${(!actRows && !peRows) ? '<div style="color:var(--text-muted);font-size:13px">予定はありません</div>' : ''}
+      </div>
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+
 function openEvent(id) {
   const a = (data.activities||[]).find(x => x.id === id);
   if (!a) return;
@@ -730,7 +786,7 @@ function openEvent(id) {
       <span class="ev-cat" style="background:${color}22;color:${color}">${cats.join('/')}</span>
       <div class="ev-name">${a.name||a.actType}</div>
       <div class="ev-rows">
-        <div class="ev-row"><span class="ev-row-label">日付</span><span class="ev-row-val">${a.date} (${WD[new Date(a.date).getDay()]})</span></div>
+        <div class="ev-row"><span class="ev-row-label">日付</span><span class="ev-row-val">${a.date} (${WD[parseLocalDate(a.date).getDay()]})</span></div>
         <div class="ev-row"><span class="ev-row-label">時間</span><span class="ev-row-val">${a.startTime} 〜 ${a.endTime}</span></div>
         ${a.actType?`<div class="ev-row"><span class="ev-row-label">種別</span><span class="ev-row-val">${a.actType}</span></div>`:''}
         ${a.venue?`<div class="ev-row"><span class="ev-row-label">会場</span><span class="ev-row-val">📍 ${a.venue}</span></div>`:''}
@@ -758,7 +814,7 @@ function openPersonalEvent(id) {
       <span class="ev-cat" style="background:#7a7f9a22;color:#7a7f9a">📌 ${pe.type}</span>
       <div class="ev-name">${pe.title||pe.type}</div>
       <div class="ev-rows">
-        <div class="ev-row"><span class="ev-row-label">日付</span><span class="ev-row-val">${pe.date} (${WD[new Date(pe.date).getDay()]})</span></div>
+        <div class="ev-row"><span class="ev-row-label">日付</span><span class="ev-row-val">${pe.date} (${WD[parseLocalDate(pe.date).getDay()]})</span></div>
         <div class="ev-row"><span class="ev-row-label">対象</span><span class="ev-row-val">${pe.targetType==='staff'?'スタッフ':'選手'}: ${(pe.targets||[]).join('、')}</span></div>
         ${pe.notes?`<div class="ev-row"><span class="ev-row-label">備考</span><span class="ev-row-val">${pe.notes}</span></div>`:''}
       </div>
@@ -905,7 +961,7 @@ function renderTrmList() {
     const cats = getActCats(a);
     const catLabel = cats.join('.');
     const color = CAT_COLOR[cats[0]] || '#888';
-    const d = new Date(a.date);
+    const d = parseLocalDate(a.date);
     const teamRows = summary.teams.map(t => `
       <div class="trm-team-row">
         <span>${t.isOpponent?'主対戦相手：':'○'} ${t.name||'未定'}</span>
@@ -927,7 +983,7 @@ function renderTrmList() {
     const cats = getActCats(a);
     const catLabel = cats.join('.');
     const color = CAT_COLOR[cats[0]] || '#888';
-    const d = new Date(a.date);
+    const d = parseLocalDate(a.date);
     const opponent = getEffectiveOpponent(a, meta);
     const teamRows = summary.teams.filter(t=>!t.isOpponent).map(t => `
       <div class="trm-card-team-row">
