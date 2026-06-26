@@ -519,6 +519,35 @@ function getActCats(activity) {
   return [];
 }
 
+// ジュニアユース（U15・U14・U13）／ジュニア（U12・U11・U10・U9・U8）のグループ定義
+const JUNIOR_YOUTH_CATS = ['U15','U14','U13'];
+const JUNIOR_CATS = ['U12','U11','U10','U9','U8'];
+
+// カテゴリー配列を表示用ラベルに変換する。
+// U15・U14・U13が全て含まれていれば「ジュニアユース」、
+// U12〜U8が全て含まれていれば「ジュニア」にまとめて短縮表記する。
+// 一部だけ含まれる場合はそのまま個別のカテゴリー名を区切り文字で連結する。
+function formatCatLabel(cats, sep='/') {
+  if (!cats || !cats.length) return '';
+  const hasAllYouth = JUNIOR_YOUTH_CATS.every(c => cats.includes(c));
+  const hasAllJunior = JUNIOR_CATS.every(c => cats.includes(c));
+
+  if (hasAllYouth && hasAllJunior) {
+    // 8カテゴリー全部が対象の場合：両グループ名を組み合わせる
+    const rest = cats.filter(c => !JUNIOR_YOUTH_CATS.includes(c) && !JUNIOR_CATS.includes(c));
+    return ['ジュニアユース','ジュニア', ...rest].join(sep);
+  }
+  if (hasAllYouth) {
+    const rest = cats.filter(c => !JUNIOR_YOUTH_CATS.includes(c));
+    return ['ジュニアユース', ...rest].join(sep);
+  }
+  if (hasAllJunior) {
+    const rest = cats.filter(c => !JUNIOR_CATS.includes(c));
+    return ['ジュニア', ...rest].join(sep);
+  }
+  return cats.join(sep);
+}
+
 // ===== Load data =====
 async function loadData() {
   const remote = await BIN.get();
@@ -587,7 +616,7 @@ function renderCalendar() {
     const maxChips = 2;
     const chips = dayActs.slice(0,maxChips).map(a => {
       const cats = getActCats(a);
-      const catLabel = cats.join('/');
+      const catLabel = formatCatLabel(cats, '/');
       const primaryCat = cats[0]||'';
       return `
       <div class="event-chip" data-cat="${primaryCat}" onclick="openEvent('${a.id}')" title="${catLabel} ${a.name||''} ${a.startTime}〜${a.endTime}">
@@ -745,7 +774,7 @@ function renderList() {
       const isJoint = matchCats.length > 1;
       const isOff = match.actType === 'OFF';
       const opponent = !isOff ? extractOpponent(match.name) : '';
-      return `<div class="cat-minicard${isOff?' is-off':''}${wideClass}" style="${widthStyle}border-color:${color};background:${color}1a;color:${color}" onclick="openEvent('${match.id}')" title="${isJoint?'合同：'+matchCats.join('/'):cat}">
+      return `<div class="cat-minicard${isOff?' is-off':''}${wideClass}" style="${widthStyle}border-color:${color};background:${color}1a;color:${color}" onclick="openEvent('${match.id}')" title="${isJoint?'合同：'+formatCatLabel(matchCats,'/'):cat}">
         <div class="cmc-label">${cat}${isJoint?' 🔗':''}</div>
         <div class="cmc-type">${isOff?'OFF':(match.actType||'')}</div>
         ${match.name?`<div class="cmc-name">${match.name}</div>`:''}
@@ -850,7 +879,7 @@ function openDayDetail(ds) {
 
   const actRows = dayActs.map(a => {
     const cats = getActCats(a);
-    const catLabel = cats.join('/');
+    const catLabel = formatCatLabel(cats, '/');
     const color = CAT_COLOR[cats[0]] || '#888';
     return `<div class="ev-row" style="cursor:pointer" onclick="openEvent('${a.id}')">
       <span class="ev-row-label" style="color:${color};font-weight:700">${catLabel}</span>
@@ -883,7 +912,7 @@ function openEvent(id) {
   const color = CAT_COLOR[primaryCat] || '#888';
   document.getElementById('modal-body').innerHTML = `
     <div class="event-detail">
-      <span class="ev-cat" style="background:${color}22;color:${color}">${cats.join('/')}</span>
+      <span class="ev-cat" style="background:${color}22;color:${color}">${formatCatLabel(cats,'/')}</span>
       <div class="ev-name">${a.name||a.actType}</div>
       <div class="ev-rows">
         <div class="ev-row"><span class="ev-row-label">日付</span><span class="ev-row-val">${a.date} (${WD[parseLocalDate(a.date).getDay()]})</span></div>
@@ -1059,7 +1088,7 @@ function renderTrmList() {
   // ----- Desktop table -----
   tableBody.innerHTML = trmActs.map(({activity:a, meta, summary}) => {
     const cats = getActCats(a);
-    const catLabel = cats.join('.');
+    const catLabel = formatCatLabel(cats, '.');
     const color = CAT_COLOR[cats[0]] || '#888';
     const d = parseLocalDate(a.date);
     const teamRows = summary.teams.map(t => `
@@ -1081,7 +1110,7 @@ function renderTrmList() {
   // ----- Mobile cards -----
   cardList.innerHTML = trmActs.map(({activity:a, meta, summary}) => {
     const cats = getActCats(a);
-    const catLabel = cats.join('.');
+    const catLabel = formatCatLabel(cats, '.');
     const color = CAT_COLOR[cats[0]] || '#888';
     const d = parseLocalDate(a.date);
     const opponent = getEffectiveOpponent(a, meta);
@@ -1122,7 +1151,7 @@ function openTrmEditModal(activityId) {
 
   document.getElementById('trm-edit-body').innerHTML = `
     <div class="trm-edit-section">
-      <span class="trm-cat-badge" style="background:${CAT_COLOR[cats[0]]||'#888'}22;color:${CAT_COLOR[cats[0]]||'#888'}">${cats.join('.')}</span>
+      <span class="trm-cat-badge" style="background:${CAT_COLOR[cats[0]]||'#888'}22;color:${CAT_COLOR[cats[0]]||'#888'}">${formatCatLabel(cats,'.')}</span>
       <div style="font-size:16px;font-weight:700;margin-top:8px">${activity.name||activity.actType}</div>
       <div style="font-size:12px;color:var(--text-muted);margin-top:4px">${activity.date} ${activity.startTime}〜${activity.endTime} ／ ${activity.venue||'会場未設定'}</div>
     </div>

@@ -555,6 +555,33 @@ function getActCats(activity) {
   return [];
 }
 
+// ジュニアユース（U15・U14・U13）／ジュニア（U12・U11・U10・U9・U8）のグループ定義
+const JUNIOR_YOUTH_CATS = ['U15','U14','U13'];
+const JUNIOR_CATS = ['U12','U11','U10','U9','U8'];
+
+// カテゴリー配列を表示用ラベルに変換する。
+// U15・U14・U13が全て含まれていれば「ジュニアユース」、
+// U12〜U8が全て含まれていれば「ジュニア」にまとめて短縮表記する。
+function formatCatLabel(cats, sep='/') {
+  if (!cats || !cats.length) return '';
+  const hasAllYouth = JUNIOR_YOUTH_CATS.every(c => cats.includes(c));
+  const hasAllJunior = JUNIOR_CATS.every(c => cats.includes(c));
+
+  if (hasAllYouth && hasAllJunior) {
+    const rest = cats.filter(c => !JUNIOR_YOUTH_CATS.includes(c) && !JUNIOR_CATS.includes(c));
+    return ['ジュニアユース','ジュニア', ...rest].join(sep);
+  }
+  if (hasAllYouth) {
+    const rest = cats.filter(c => !JUNIOR_YOUTH_CATS.includes(c));
+    return ['ジュニアユース', ...rest].join(sep);
+  }
+  if (hasAllJunior) {
+    const rest = cats.filter(c => !JUNIOR_CATS.includes(c));
+    return ['ジュニア', ...rest].join(sep);
+  }
+  return cats.join(sep);
+}
+
 // 初期選手データ（初回のみ投入）
 const DEFAULT_PLAYERS = [
   // U15（中3）
@@ -815,7 +842,7 @@ function renderCalendar(){
     const absBadge=dayAbsCount?`<span class="abs-badge" onclick="event.stopPropagation();showAbsDetail('${ds}')">🏖 ${dayAbsCount}名</span>`:'';
     const chips=dayActs.slice(0,4).map(a=>{
       const cats=getActCats(a);
-      const catLabel=cats.join('/');
+      const catLabel=formatCatLabel(cats,'/');
       const primaryCat=cats[0]||'';
       const nameLabel=a.name?`｜${a.name}`:'';
       return `<span class="event-chip" data-cat="${primaryCat}" onclick="event.stopPropagation();openActForm('${a.id}')" title="${catLabel} ${a.name||a.actType} ${a.startTime}〜${a.endTime}">${catLabel} ${a.actType}${nameLabel}</span>`;
@@ -940,7 +967,7 @@ function renderDayList(){
       const isJoint = matchCats.length > 1;
       const isOff = match.actType === 'OFF';
       const opponent = !isOff ? extractOpponent(match.name) : '';
-      return `<div class="cat-minicard${isOff?' is-off':''}${wideClass}" style="${widthStyle}border-color:${color};background:${color}1a;color:${color}" onclick="event.stopPropagation();openActForm('${match.id}')" title="${isJoint?'合同：'+matchCats.join('/'):cat}">
+      return `<div class="cat-minicard${isOff?' is-off':''}${wideClass}" style="${widthStyle}border-color:${color};background:${color}1a;color:${color}" onclick="event.stopPropagation();openActForm('${match.id}')" title="${isJoint?'合同：'+formatCatLabel(matchCats,'/'):cat}">
         <div class="cmc-label">${cat}${isJoint?' 🔗':''}</div>
         <div class="cmc-type">${isOff?'OFF':(match.actType||'')}</div>
         ${match.name?`<div class="cmc-name">${match.name}</div>`:''}
@@ -1153,7 +1180,7 @@ function checkConflicts(){
   const warn=document.getElementById('conflict-warn');
   if(!date||!venue||!s||!e){warn.classList.remove('show');return;}
   const conflicts=(data.activities||[]).filter(a=>a.id!==editActId&&a.date===date&&a.venue===venue&&a.actType!=='OFF'&&a.startTime<e&&a.endTime>s);
-  if(conflicts.length){warn.textContent=`⚠ 会場重複: ${conflicts.map(c=>`${getActCats(c).join('/')} ${c.startTime}〜${c.endTime}`).join('、')}`;warn.classList.add('show');}
+  if(conflicts.length){warn.textContent=`⚠ 会場重複: ${conflicts.map(c=>`${formatCatLabel(getActCats(c),'/')} ${c.startTime}〜${c.endTime}`).join('、')}`;warn.classList.add('show');}
   else warn.classList.remove('show');
   updatePlayerCount();
 }
