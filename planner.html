@@ -168,21 +168,36 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
 .day-row-cats { flex: 1; display: flex; gap: 6px; overflow-x: auto; padding: 8px; scrollbar-width: thin; }
 .day-row-cats::-webkit-scrollbar { height: 4px; }
 .day-row-cats::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.day-row-cats.is-filtered { flex-wrap: wrap; }
 
-.cat-minicard { flex: 0 0 84px; min-width: 84px; border-radius: 6px; padding: 6px 7px; cursor: pointer; border: 1.5px solid; display: flex; flex-direction: column; gap: 2px; transition: opacity .12s; }
+.cat-minicard { flex: 0 0 84px; min-width: 84px; border-radius: 6px; padding: 6px 7px; cursor: pointer; border: 1.5px solid; display: flex; flex-direction: column; gap: 2px; transition: opacity .12s, flex-basis .15s; }
 .cat-minicard:hover { opacity: 0.85; }
 .cat-minicard .cmc-label { font-size: 11px; font-weight: 700; }
 .cat-minicard .cmc-type { font-size: 10px; font-weight: 700; }
 .cat-minicard .cmc-time { font-size: 9px; opacity: 0.85; }
 .cat-minicard .cmc-venue { font-size: 8px; opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cat-minicard .cmc-opponent { font-size: 9px; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
 .cat-minicard.is-empty { border-style: dashed; opacity: 0.5; justify-content: center; align-items: center; }
 .cat-minicard.is-empty .cmc-label { font-size: 10px; }
 .cat-minicard.is-off { opacity: 0.55; }
+
+/* 横幅を広く使う表示（カテゴリーが絞られている時） */
+.cat-minicard.is-wide { flex: 1 1 160px; min-width: 140px; padding: 8px 10px; }
+.cat-minicard.is-wide .cmc-label { font-size: 13px; }
+.cat-minicard.is-wide .cmc-type { font-size: 12px; }
+.cat-minicard.is-wide .cmc-time { font-size: 11px; }
+.cat-minicard.is-wide .cmc-venue, .cat-minicard.is-wide .cmc-opponent { font-size: 10px; white-space: normal; }
+
+/* カテゴリーフィルター（一覧タブ専用） */
+.daylist-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.daylist-filter-btn { padding: 4px 11px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; border: 2px solid transparent; background: var(--surface2); color: var(--text-muted); transition: all .15s; }
+.daylist-filter-btn.active { color: #fff; }
 
 @media(max-width:480px){
   .day-row-date { width: 52px; }
   .day-row-date .drd-day { font-size: 18px; }
   .cat-minicard { flex: 0 0 72px; min-width: 72px; padding: 5px 6px; }
+  .cat-minicard.is-wide { flex: 1 1 130px; min-width: 110px; }
 }
 
 /* ===== TRM Match Management ===== */
@@ -323,6 +338,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
       <button class="daylist-nav-btn" onclick="changeListRange(7)">次へ ›</button>
     </div>
     <div class="daylist-legend" id="daylist-legend"></div>
+    <div class="daylist-filter" id="daylist-filter"></div>
     <div id="act-list"></div>
   </div>
 </div>
@@ -460,6 +476,7 @@ let data = { activities: [], players: [], staff: [], vehicles: [], venues: [], a
 let activeFilters = new Set(['U15','U14','U13','U12','U11','U10','U9','U8']);
 let listRangeStart = fmtDate(TODAY);
 let listRangeAdjusted = false; // 初回だけ「直近の予定がある週」へ自動ジャンプするためのフラグ
+let listCatFilters = new Set(['U15','U14','U13','U12','U11','U10','U9','U8']); // 一覧タブ専用のカテゴリー選択
 
 const CATS = ['U15','U14','U13','U12','U11','U10','U9','U8'];
 const CAT_COLOR = { U15:'#e05252', U14:'#9b59dc', U13:'#4a7cdc', U12:'#3ab07a', U11:'#2ba8a8', U10:'#e0bc3a', U9:'#e08c3a', U8:'#c97ad6' };
@@ -594,6 +611,31 @@ function toggleFilter(btn) {
 }
 
 // ===== List (Day-row x Category grid) =====
+function renderListFilter() {
+  const el = document.getElementById('daylist-filter');
+  if (!el) return;
+  const allActive = CATS.every(c => listCatFilters.has(c));
+  el.innerHTML = `<span class="daylist-filter-btn${allActive?' active':''}" data-cat="ALL" onclick="toggleListFilter(this)" style="${allActive?'background:var(--accent);border-color:var(--accent)':''}">ALL</span>` +
+    CATS.map(cat => {
+      const active = listCatFilters.has(cat);
+      const color = CAT_COLOR[cat];
+      return `<span class="daylist-filter-btn${active?' active':''}" data-cat="${cat}" onclick="toggleListFilter(this)" style="border-color:${color};${active?`background:${color}`:''}">${cat}</span>`;
+    }).join('');
+}
+
+function toggleListFilter(btn) {
+  const cat = btn.dataset.cat;
+  if (cat === 'ALL') {
+    const allActive = CATS.every(c => listCatFilters.has(c));
+    if (allActive) listCatFilters.clear();
+    else CATS.forEach(c => listCatFilters.add(c));
+  } else {
+    if (listCatFilters.has(cat)) listCatFilters.delete(cat);
+    else listCatFilters.add(cat);
+  }
+  renderList();
+}
+
 function changeListRange(days) {
   const d = parseLocalDate(listRangeStart);
   d.setDate(d.getDate() + days);
@@ -628,12 +670,17 @@ function renderList() {
   }
 
   renderListLegend();
+  renderListFilter();
   const acts = data.activities || [];
   const numDays = 7;
   const start = parseLocalDate(listRangeStart);
   const end = new Date(start); end.setDate(end.getDate() + numDays - 1);
   document.getElementById('daylist-range-label').textContent =
     `${start.getMonth()+1}/${start.getDate()} 〜 ${end.getMonth()+1}/${end.getDate()}`;
+
+  // 選択中のカテゴリーのみ表示。選択数が少ないほど横幅を広く使う（カードを大きくする）
+  const visibleCats = CATS.filter(c => listCatFilters.has(c));
+  const isWide = visibleCats.length > 0 && visibleCats.length <= 4;
 
   const el = document.getElementById('act-list');
   const rows = [];
@@ -646,12 +693,13 @@ function renderList() {
 
     const dayActs = acts.filter(a => a.date === ds);
 
-    const catCards = CATS.map(cat => {
+    const catCards = visibleCats.map(cat => {
       // この日・このカテゴリーに該当する活動を探す（複数カテゴリーの予定も拾う）
       const match = dayActs.find(a => getActCats(a).includes(cat));
       const color = CAT_COLOR[cat] || '#888';
+      const wideClass = isWide ? ' is-wide' : '';
       if (!match) {
-        return `<div class="cat-minicard is-empty" style="border-color:${color}55;color:${color}" onclick="handleEmptyCatTap('${ds}','${cat}')">
+        return `<div class="cat-minicard is-empty${wideClass}" style="border-color:${color}55;color:${color}" onclick="handleEmptyCatTap('${ds}','${cat}')">
           <div class="cmc-label">${cat}</div>
           <div class="cmc-type">予定なし</div>
         </div>`;
@@ -659,10 +707,12 @@ function renderList() {
       const matchCats = getActCats(match);
       const isJoint = matchCats.length > 1;
       const isOff = match.actType === 'OFF';
-      return `<div class="cat-minicard${isOff?' is-off':''}" style="border-color:${color};background:${color}1a;color:${color}" onclick="openEvent('${match.id}')" title="${isJoint?'合同：'+matchCats.join('/'):cat}">
+      const opponent = !isOff ? extractOpponent(match.name) : '';
+      return `<div class="cat-minicard${isOff?' is-off':''}${wideClass}" style="border-color:${color};background:${color}1a;color:${color}" onclick="openEvent('${match.id}')" title="${isJoint?'合同：'+matchCats.join('/'):cat}">
         <div class="cmc-label">${cat}${isJoint?' 🔗':''}</div>
         <div class="cmc-type">${isOff?'OFF':(match.actType||'')}</div>
         ${!isOff?`<div class="cmc-time">${match.startTime||''}</div>`:''}
+        ${opponent?`<div class="cmc-opponent">⚔️ ${opponent}</div>`:''}
         ${!isOff && match.venue?`<div class="cmc-venue">📍${match.venue}</div>`:''}
       </div>`;
     }).join('');
@@ -674,7 +724,7 @@ function renderList() {
           <div class="drd-wd">${WD[wd]}</div>
           ${isToday?'<div class="drd-today-tag">今日</div>':''}
         </div>
-        <div class="day-row-cats">${catCards}</div>
+        <div class="day-row-cats${isWide?' is-filtered':''}">${catCards || '<span style="font-size:11px;color:var(--text-muted);padding:8px">カテゴリーを選択してください</span>'}</div>
       </div>
     `);
   }
