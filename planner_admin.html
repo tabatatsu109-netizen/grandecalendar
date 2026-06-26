@@ -866,7 +866,7 @@ function renderDayList(){
     `${start.getMonth()+1}/${start.getDate()} 〜 ${end.getMonth()+1}/${end.getDate()}`;
 
   const visibleCats = CATS.filter(c=>listCatFilters.has(c));
-  const isFiltered = visibleCats.length > 0 && visibleCats.length < CATS.length;
+  const isFiltered = visibleCats.length > 0;
   const wideBasis = visibleCats.length > 0 ? `calc((100% - ${(visibleCats.length-1)*6}px) / ${visibleCats.length})` : '';
 
   const rows = [];

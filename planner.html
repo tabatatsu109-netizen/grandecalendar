@@ -682,7 +682,7 @@ function renderList() {
   // 全8カテゴリー選択時はこれまで通り固定幅で横スクロール、
   // それより少ない数を選んだ場合は、選択数に応じて均等に幅を分けて余白なく埋める。
   const visibleCats = CATS.filter(c => listCatFilters.has(c));
-  const isFiltered = visibleCats.length > 0 && visibleCats.length < CATS.length;
+  const isFiltered = visibleCats.length > 0;
   const wideBasis = visibleCats.length > 0 ? `calc((100% - ${(visibleCats.length-1)*6}px) / ${visibleCats.length})` : '';
 
   const el = document.getElementById('act-list');
