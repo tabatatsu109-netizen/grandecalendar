@@ -162,6 +162,16 @@ input[readonly]{color:var(--accent);font-weight:700;}
 .daylist-filter-btn{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:2px solid transparent;background:var(--surface2);color:var(--text-muted);transition:all .15s;}
 .daylist-filter-btn.active{color:#fff;}
 
+/* 特別項目（リネン配送日・スクール・メセタ等）ON/OFF表示用 */
+.daylist-filter-sep{width:1px;background:var(--border);margin:0 4px;}
+.special-minicard{flex:0 0 84px;min-width:84px;border-radius:6px;padding:6px 7px;border:1.5px solid;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;box-sizing:border-box;cursor:pointer;transition:opacity .12s;}
+.special-minicard:hover{opacity:0.8;}
+.special-minicard.is-on{font-weight:700;}
+.special-minicard.is-off-state{border-style:dashed;opacity:0.5;}
+.special-minicard .smc-label{font-size:10px;text-align:center;white-space:normal;line-height:1.3;}
+.special-minicard.is-wide .smc-label{font-size:12px;}
+.special-minicard .smc-icon{font-size:14px;}
+
 .day-row-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;display:flex;overflow:hidden;}
 .day-row-card.is-today{border-color:var(--accent);}
 .day-row-date{width:64px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px;background:var(--surface2);border-right:1px solid var(--border);gap:2px;}
@@ -632,7 +642,8 @@ let data = {
   vehicles:['マイクロバス','ハイエース①','ハイエース②','軽トラック'],
   venues:['白州総合グラウンド','長坂総合スポーツ公園'],
   absences:[],
-  personalEvents:[]
+  personalEvents:[],
+  specialDays:{}
 };
 
 let curYear  = TODAY.getFullYear();
@@ -642,6 +653,27 @@ let editPlayerId = null;
 let listRangeStart = null; // 一覧タブの表示開始日（初回タブ表示時に今日で初期化）
 let listRangeAdjusted = false;
 let listCatFilters = new Set(['U15','U14','U13','U12','U11','U10','U9','U8']);
+let listSpecialFilters = new Set(['リネン配送日','スクール','メセタ']);
+
+// 一覧タブのU15〜U8の列と並ぶ「特別項目」（ON/OFFのみで管理する列）
+const SPECIAL_DAYS = ['リネン配送日','スクール','メセタ'];
+const SPECIAL_COLOR = { 'リネン配送日':'#5ab0e0', 'スクール':'#7ad08a', 'メセタ':'#d09a5a' };
+
+function isSpecialDayOn(ds, item) {
+  const list = (data.specialDays && data.specialDays[ds]) || [];
+  return list.includes(item);
+}
+
+function toggleSpecialDay(ds, item) {
+  if (!data.specialDays) data.specialDays = {};
+  if (!data.specialDays[ds]) data.specialDays[ds] = [];
+  const idx = data.specialDays[ds].indexOf(item);
+  if (idx >= 0) data.specialDays[ds].splice(idx, 1);
+  else data.specialDays[ds].push(item);
+  if (data.specialDays[ds].length === 0) delete data.specialDays[ds];
+  renderDayList();
+  toast(`${ds} の${item}を${isSpecialDayOn(ds,item)?'ON':'OFF'}にしました（保存ボタンを押してください）`);
+}
 
 // "YYYY-MM-DD" 文字列をローカルタイムゾーンで安全にDateへ変換する
 function parseLocalDate(dateStr) {
@@ -820,15 +852,28 @@ function renderListFilter(){
   const el = document.getElementById('daylist-filter');
   if (!el) return;
   const allActive = CATS.every(c=>listCatFilters.has(c));
-  el.innerHTML = `<span class="daylist-filter-btn${allActive?' active':''}" data-cat="ALL" onclick="toggleListFilter(this)" style="${allActive?'background:var(--accent);border-color:var(--accent)':''}">ALL</span>` +
+  const catChips = `<span class="daylist-filter-btn${allActive?' active':''}" data-cat="ALL" onclick="toggleListFilter(this)" style="${allActive?'background:var(--accent);border-color:var(--accent)':''}">ALL</span>` +
     CATS.map(cat=>{
       const active = listCatFilters.has(cat);
       const color = CAT_COLOR[cat];
       return `<span class="daylist-filter-btn${active?' active':''}" data-cat="${cat}" onclick="toggleListFilter(this)" style="border-color:${color};${active?`background:${color}`:''}">${cat}</span>`;
     }).join('');
+  const specialChips = SPECIAL_DAYS.map(item=>{
+    const active = listSpecialFilters.has(item);
+    const color = SPECIAL_COLOR[item];
+    return `<span class="daylist-filter-btn${active?' active':''}" data-special="${item}" onclick="toggleListFilter(this)" style="border-color:${color};${active?`background:${color}`:''}">${item}</span>`;
+  }).join('');
+  el.innerHTML = catChips + '<span class="daylist-filter-sep"></span>' + specialChips;
 }
 
 function toggleListFilter(btn){
+  if (btn.dataset.special) {
+    const item = btn.dataset.special;
+    if (listSpecialFilters.has(item)) listSpecialFilters.delete(item);
+    else listSpecialFilters.add(item);
+    renderDayList();
+    return;
+  }
   const cat = btn.dataset.cat;
   if (cat === 'ALL') {
     const allActive = CATS.every(c=>listCatFilters.has(c));
@@ -866,8 +911,10 @@ function renderDayList(){
     `${start.getMonth()+1}/${start.getDate()} 〜 ${end.getMonth()+1}/${end.getDate()}`;
 
   const visibleCats = CATS.filter(c=>listCatFilters.has(c));
-  const isFiltered = visibleCats.length > 0;
-  const wideBasis = visibleCats.length > 0 ? `calc((100% - ${(visibleCats.length-1)*6}px) / ${visibleCats.length})` : '';
+  const visibleSpecials = SPECIAL_DAYS.filter(s=>listSpecialFilters.has(s));
+  const totalCols = visibleCats.length + visibleSpecials.length;
+  const isFiltered = totalCols > 0;
+  const wideBasis = totalCols > 0 ? `calc((100% - ${(totalCols-1)*6}px) / ${totalCols})` : '';
 
   const rows = [];
   for (let i=0;i<numDays;i++) {
@@ -903,6 +950,18 @@ function renderDayList(){
       </div>`;
     }).join('');
 
+    // 特別項目（リネン配送日・スクール・メセタ）：タップでON/OFF切り替え
+    const specialCards = visibleSpecials.map(item=>{
+      const on = isSpecialDayOn(ds, item);
+      const color = SPECIAL_COLOR[item] || '#888';
+      const wideClass = isFiltered ? ' is-wide' : '';
+      const widthStyle = isFiltered ? `flex:1 1 ${wideBasis};min-width:0;` : '';
+      return `<div class="special-minicard${on?' is-on':' is-off-state'}${wideClass}" style="${widthStyle}border-color:${color};${on?`background:${color}33;color:${color}`:`color:${color}`}" onclick="event.stopPropagation();toggleSpecialDay('${ds}','${item}')">
+        <span class="smc-icon">${on?'✅':'—'}</span>
+        <div class="smc-label">${item}</div>
+      </div>`;
+    }).join('');
+
     rows.push(`
       <div class="day-row-card${isToday?' is-today':''}">
         <div class="day-row-date ${dateClass}">
@@ -910,7 +969,7 @@ function renderDayList(){
           <div class="drd-wd">${WD[wd]}</div>
           ${isToday?'<div class="drd-today-tag">今日</div>':''}
         </div>
-        <div class="day-row-cats${isFiltered?' is-filtered':''}">${catCards || '<span style="font-size:11px;color:var(--text-muted);padding:8px">カテゴリーを選択してください</span>'}</div>
+        <div class="day-row-cats${isFiltered?' is-filtered':''}">${catCards}${specialCards || (catCards?'':'<span style="font-size:11px;color:var(--text-muted);padding:8px">カテゴリーを選択してください</span>')}</div>
       </div>
     `);
   }
