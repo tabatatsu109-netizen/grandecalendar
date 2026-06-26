@@ -318,9 +318,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
 <div class="tab-content" id="tab-list">
   <div class="daylist-wrap">
     <div class="daylist-nav">
-      <button class="daylist-nav-btn" onclick="changeListRange(-14)">‹ 前へ</button>
+      <button class="daylist-nav-btn" onclick="changeListRange(-7)">‹ 前へ</button>
       <span class="daylist-today-label" id="daylist-range-label"></span>
-      <button class="daylist-nav-btn" onclick="changeListRange(14)">次へ ›</button>
+      <button class="daylist-nav-btn" onclick="changeListRange(7)">次へ ›</button>
     </div>
     <div class="daylist-legend" id="daylist-legend"></div>
     <div id="act-list"></div>
@@ -656,11 +656,11 @@ function renderList() {
           <div class="cmc-type">予定なし</div>
         </div>`;
       }
-      const cats = getActCats(match);
-      const catLabel = cats.join('.');
+      const matchCats = getActCats(match);
+      const isJoint = matchCats.length > 1;
       const isOff = match.actType === 'OFF';
-      return `<div class="cat-minicard${isOff?' is-off':''}" style="border-color:${color};background:${color}1a;color:${color}" onclick="openEvent('${match.id}')">
-        <div class="cmc-label">${catLabel}</div>
+      return `<div class="cat-minicard${isOff?' is-off':''}" style="border-color:${color};background:${color}1a;color:${color}" onclick="openEvent('${match.id}')" title="${isJoint?'合同：'+matchCats.join('/'):cat}">
+        <div class="cmc-label">${cat}${isJoint?' 🔗':''}</div>
         <div class="cmc-type">${isOff?'OFF':(match.actType||'')}</div>
         ${!isOff?`<div class="cmc-time">${match.startTime||''}</div>`:''}
         ${!isOff && match.venue?`<div class="cmc-venue">📍${match.venue}</div>`:''}
