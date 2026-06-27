@@ -201,6 +201,46 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
 
 /* 特別項目（リネン配送日・スクール・メセタ等）ON/OFF表示用 */
 .daylist-filter-sep { width: 1px; background: var(--border); margin: 0 4px; }
+
+/* ===== View mode toggle ===== */
+.daylist-view-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+.dvt-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.dvt-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ===== Day view (smartphone-friendly single-day mode) ===== */
+.dayview-strip-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.dayview-strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 14px; scrollbar-width: thin; }
+.dayview-strip::-webkit-scrollbar { height: 4px; }
+.dayview-strip::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.dvs-day { flex: 0 0 52px; min-width: 52px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
+.dvs-day.is-selected { background: var(--accent); border-color: var(--accent); }
+.dvs-day.is-selected .dvs-num, .dvs-day.is-selected .dvs-wd { color: #fff; }
+.dvs-day.is-today:not(.is-selected) { border-color: var(--accent); }
+.dvs-num { font-size: 16px; font-weight: 700; line-height: 1; }
+.dvs-wd { font-size: 10px; color: var(--text-muted); }
+.dvs-day.is-sun .dvs-num { color: var(--red); }
+.dvs-day.is-sat .dvs-num { color: #6ab4ff; }
+.dvs-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin-top: 1px; }
+
+.dayview-date-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.dayview-date-title { font-size: 16px; font-weight: 700; }
+.dayview-issue-badge { background: rgba(224,82,82,0.18); color: var(--red); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 14px; cursor: pointer; }
+
+.dayview-card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid; border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; cursor: pointer; }
+.dayview-card:hover { border-color: var(--accent); }
+.dayview-card.is-empty { opacity: 0.55; border-left-style: dashed; cursor: default; }
+.dvc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.dvc-cat-badge { font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 6px; }
+.dvc-type { font-size: 14px; font-weight: 700; }
+.dvc-rows { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
+.dvc-row { display: flex; align-items: center; gap: 6px; }
+
+.dayview-add-btn { background: var(--surface2); border: 1px dashed var(--border); color: var(--text-muted); padding: 12px; border-radius: var(--radius); font-size: 13px; cursor: default; text-align: center; margin-bottom: 14px; }
+
+.dayview-other-info { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.dvoi-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; font-size: 13px; border-bottom: 1px solid var(--border); }
+.dvoi-row:last-child { border-bottom: none; }
+.dvoi-count { color: var(--text-muted); font-size: 12px; }
 .special-minicard { flex: 0 0 84px; min-width: 84px; border-radius: 6px; padding: 6px 7px; border: 1.5px solid; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; box-sizing: border-box; }
 .special-minicard.is-on { font-weight: 700; }
 .special-minicard.is-off-state { border-style: dashed; opacity: 0.4; }
@@ -281,14 +321,33 @@ body { background: var(--bg); color: var(--text); font-family: 'Hiragino Kaku Go
 <!-- List Tab -->
 <div class="tab-content" id="tab-list">
   <div class="daylist-wrap">
-    <div class="daylist-nav">
-      <button class="daylist-nav-btn" onclick="changeListRange(-1)">‹ 前月</button>
-      <span class="daylist-today-label" id="daylist-range-label"></span>
-      <button class="daylist-nav-btn" onclick="changeListRange(1)">次月 ›</button>
+    <div class="daylist-view-toggle">
+      <button class="dvt-btn active" data-mode="grid" onclick="setListViewMode('grid')">📊 グリッド表示</button>
+      <button class="dvt-btn" data-mode="day" onclick="setListViewMode('day')">📱 1日表示</button>
     </div>
-    <div class="daylist-legend" id="daylist-legend"></div>
-    <div class="daylist-filter" id="daylist-filter"></div>
-    <div id="act-list"></div>
+
+    <!-- Grid mode (existing) -->
+    <div id="list-mode-grid">
+      <div class="daylist-nav">
+        <button class="daylist-nav-btn" onclick="changeListRange(-1)">‹ 前月</button>
+        <span class="daylist-today-label" id="daylist-range-label"></span>
+        <button class="daylist-nav-btn" onclick="changeListRange(1)">次月 ›</button>
+      </div>
+      <div class="daylist-legend" id="daylist-legend"></div>
+      <div class="daylist-filter" id="daylist-filter"></div>
+      <div id="act-list"></div>
+    </div>
+
+    <!-- Day mode (new, smartphone-friendly single-day card view) -->
+    <div id="list-mode-day" style="display:none">
+      <div class="dayview-strip-nav">
+        <button class="daylist-nav-btn" onclick="changeDayViewStrip(-7)">‹</button>
+        <span class="daylist-today-label" id="dayview-month-label"></span>
+        <button class="daylist-nav-btn" onclick="changeDayViewStrip(7)">›</button>
+      </div>
+      <div class="dayview-strip" id="dayview-strip"></div>
+      <div class="dayview-detail" id="dayview-detail"></div>
+    </div>
   </div>
 </div>
 
@@ -360,6 +419,9 @@ let listMonth = TODAY.getMonth();
 let listRangeAdjusted = false; // 初回だけ「直近の予定がある月」へ自動ジャンプするためのフラグ
 let listCatFilters = new Set(['U15','U14','U13','U12','U11','U10','U9','U8']); // 一覧タブ専用のカテゴリー選択
 let listSpecialFilters = new Set(['リネン配送日','スクール','メセタ']); // 一覧タブ専用：特別項目（ON/OFFのみ）の選択
+let listViewMode = 'grid'; // 'grid'（既存の日付×カテゴリー横並び）または 'day'（1日表示・スマホ向け）
+let dayViewSelectedDate = fmtDate(TODAY); // 1日表示で選択中の日付
+let dayViewStripStart = fmtDate(TODAY); // 1日表示の日付ストリップの開始日
 
 const CATS = ['U15','U14','U13','U12','U11','U10','U9','U8'];
 const CAT_COLOR = { U15:'#e05252', U14:'#9b59dc', U13:'#4a7cdc', U12:'#3ab07a', U11:'#2ba8a8', U10:'#e0bc3a', U9:'#e08c3a', U8:'#c97ad6' };
@@ -618,6 +680,115 @@ function renderListLegend() {
       <span class="daylist-legend-dot" style="background:${CAT_COLOR[cat]}"></span>${cat}
     </span>
   `).join('');
+}
+
+// ============================================================
+// 1日表示モード（スマホ向け：日付ストリップ＋縦カードリスト）
+// ============================================================
+function setListViewMode(mode) {
+  listViewMode = mode;
+  document.querySelectorAll('.dvt-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  document.getElementById('list-mode-grid').style.display = mode === 'grid' ? 'block' : 'none';
+  document.getElementById('list-mode-day').style.display = mode === 'day' ? 'block' : 'none';
+  if (mode === 'day') renderDayView();
+}
+
+function changeDayViewStrip(days) {
+  const d = parseLocalDate(dayViewStripStart);
+  d.setDate(d.getDate() + days);
+  dayViewStripStart = fmtDate(d);
+  renderDayView();
+}
+
+function selectDayViewDate(ds) {
+  dayViewSelectedDate = ds;
+  renderDayView();
+}
+
+function renderDayView() {
+  const stripEl = document.getElementById('dayview-strip');
+  const detailEl = document.getElementById('dayview-detail');
+  if (!stripEl || !detailEl) return;
+
+  // 日付ストリップ（7日分）を描画
+  const stripStart = parseLocalDate(dayViewStripStart);
+  const stripDays = [];
+  for (let i=0;i<7;i++) {
+    const d = new Date(stripStart); d.setDate(d.getDate()+i);
+    stripDays.push(d);
+  }
+  document.getElementById('dayview-month-label').textContent = `${stripStart.getMonth()+1}月`;
+
+  const acts = data.activities || [];
+  stripEl.innerHTML = stripDays.map(d => {
+    const ds = fmtDate(d);
+    const wd = d.getDay();
+    const isToday = ds === fmtDate(TODAY);
+    const isSelected = ds === dayViewSelectedDate;
+    const hasActs = acts.some(a => a.date === ds);
+    const dateClass = wd===0 ? 'is-sun' : (wd===6 ? 'is-sat' : '');
+    return `<div class="dvs-day ${dateClass}${isToday?' is-today':''}${isSelected?' is-selected':''}" onclick="selectDayViewDate('${ds}')">
+      <div class="dvs-num">${d.getDate()}</div>
+      <div class="dvs-wd">${WD[wd]}</div>
+      ${hasActs?'<div class="dvs-dot"></div>':''}
+    </div>`;
+  }).join('');
+
+  // 選択中の1日分の詳細カードを描画
+  const ds = dayViewSelectedDate;
+  const d = parseLocalDate(ds);
+  const dayActs = acts.filter(a => a.date === ds);
+  const dayIssue = getDayIssue(ds);
+  const dayAbsCount = (data.absences||[]).filter(ab => ds >= ab.startDate && ds <= ab.endDate).length;
+  const dayPevents = (data.personalEvents||[]).filter(pe => pe.date === ds);
+  const dayVehicleCount = new Set(dayActs.flatMap(a => a.vehicles||[])).size;
+
+  const cards = CATS.map(cat => {
+    const match = dayActs.find(a => getActCats(a).includes(cat));
+    const color = CAT_COLOR[cat] || '#888';
+    if (!match) {
+      return `<div class="dayview-card is-empty" style="border-left-color:${color}">
+        <div class="dvc-head">
+          <span class="dvc-cat-badge" style="background:${color}22;color:${color}">${cat}</span>
+          <span class="dvc-type">予定なし</span>
+        </div>
+      </div>`;
+    }
+    const matchCats = getActCats(match);
+    const isJoint = matchCats.length > 1;
+    const isOff = match.actType === 'OFF';
+    const opponent = !isOff ? extractOpponent(match.name) : '';
+    return `<div class="dayview-card" style="border-left-color:${color}" onclick="openEvent('${match.id}')">
+      <div class="dvc-head">
+        <span class="dvc-cat-badge" style="background:${color}22;color:${color}">${cat}${isJoint?' 🔗':''}</span>
+        <span class="dvc-type">${isOff?'OFF（オフ）':(match.actType||'')}${match.name && !isOff?'　'+match.name:''}</span>
+      </div>
+      ${!isOff ? `
+      <div class="dvc-rows">
+        <div class="dvc-row">🕐 ${match.startTime||'—'} 〜 ${match.endTime||'—'}</div>
+        ${match.venue?`<div class="dvc-row">📍 ${match.venue}</div>`:''}
+        ${opponent?`<div class="dvc-row">⚔️ vs ${opponent}</div>`:''}
+        ${match.playerCount!=null?`<div class="dvc-row">👤 選手 ${match.playerCount}名${match.staff&&match.staff.length?` / スタッフ ${match.staff.length}名`:''}</div>`:''}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  const issueBadge = dayIssue
+    ? `<span class="dayview-issue-badge" onclick="showDayIssue('${ds}')">⚠️ 問題あり</span>`
+    : '';
+
+  detailEl.innerHTML = `
+    <div class="dayview-date-header">
+      <span class="dayview-date-title">${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）</span>
+      ${issueBadge}
+    </div>
+    ${cards}
+    <div class="dayview-other-info">
+      <div class="dvoi-row"><span>🏖 休み選手</span><span class="dvoi-count">${dayAbsCount}件</span></div>
+      <div class="dvoi-row"><span>🚐 車両予定</span><span class="dvoi-count">${dayVehicleCount}件</span></div>
+      <div class="dvoi-row"><span>📌 個人予定</span><span class="dvoi-count">${dayPevents.length}件</span></div>
+    </div>
+  `;
 }
 
 function renderList() {
