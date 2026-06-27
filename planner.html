@@ -393,6 +393,21 @@ function getActCats(activity) {
   return [];
 }
 
+// 予定名から主対戦相手を自動抽出（vs / VS / Vs / 対 / v / ＶＳ に対応）
+function extractOpponent(name) {
+  if (!name) return '';
+  const patterns = [
+    /(?:vs|VS|Vs|ＶＳ)\s*(.+)$/,
+    /\s対\s*(.+)$/,
+    /\sv\s+(.+)$/i
+  ];
+  for (const re of patterns) {
+    const m = name.match(re);
+    if (m && m[1]) return m[1].trim();
+  }
+  return '';
+}
+
 // ジュニアユース（U15・U14・U13）／ジュニア（U12・U11・U10・U9・U8）のグループ定義
 const JUNIOR_YOUTH_CATS = ['U15','U14','U13'];
 const JUNIOR_CATS = ['U12','U11','U10','U9','U8'];
